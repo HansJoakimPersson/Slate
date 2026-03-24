@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Test output
+playwright-report/
+test-results/
+
+# Bundled local tools
+.tools/
+
+# macOS metadata
+.DS_Store
+
+# Reference implementation (local only)
+reference/
+
+# Internal documentation
+ARCHITECTURE.md

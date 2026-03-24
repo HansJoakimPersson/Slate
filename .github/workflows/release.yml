@@ -1,0 +1,79 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag, for example v0.1.0"
+        required: true
+        type: string
+      prerelease:
+        description: "Mark this release as a prerelease"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve release metadata
+        id: meta
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            tag="${{ inputs.tag }}"
+            prerelease="${{ inputs.prerelease }}"
+          else
+            tag="${GITHUB_REF_NAME}"
+            case "${tag}" in
+              *-alpha*|*-beta*|*-rc*)
+                prerelease="true"
+                ;;
+              *)
+                prerelease="false"
+                ;;
+            esac
+          fi
+          version="${tag#v}"
+          echo "tag=${tag}" >> "${GITHUB_OUTPUT}"
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+          echo "prerelease=${prerelease}" >> "${GITHUB_OUTPUT}"
+
+      - name: Prepare release assets
+        run: |
+          mkdir -p dist
+          cp index.html "dist/Slate-${{ steps.meta.outputs.version }}.html"
+          cp index.html "dist/Slate-latest.html"
+          shasum -a 256 dist/* > "dist/Slate-${{ steps.meta.outputs.version }}-SHA256.txt"
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.meta.outputs.tag }}
+          RELEASE_VERSION: ${{ steps.meta.outputs.version }}
+          PRE_RELEASE: ${{ steps.meta.outputs.prerelease }}
+        run: |
+          prerelease_flag=()
+          if [ "${PRE_RELEASE}" = "true" ]; then
+            prerelease_flag+=(--prerelease)
+          fi
+
+          if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
+            gh release upload "${RELEASE_TAG}" dist/* --clobber
+          else
+            gh release create "${RELEASE_TAG}" dist/* \
+              --target "${GITHUB_SHA}" \
+              --title "Slate ${RELEASE_VERSION}" \
+              --generate-notes \
+              "${prerelease_flag[@]}"
+          fi

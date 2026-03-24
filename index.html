@@ -1,0 +1,3161 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Slate Chat</title>
+    <style>
+      :root {
+        --background: #ffffff;
+        --foreground: #212121;
+        --secondary: #f5f5f5;
+        --muted: #737373;
+        --border: #e5e5e5;
+        --primary: #212121;
+        --primary-foreground: #ffffff;
+        --destructive: #dc2626;
+        --user-bubble: #ededed;
+        --assistant-bubble: #ffffff;
+        --overlay: rgba(33, 33, 33, 0.2);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+
+      body {
+        background: var(--background);
+        color: var(--foreground);
+        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      code,
+      pre {
+        font-family: "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+      }
+
+      button,
+      input,
+      textarea,
+      select {
+        font: inherit;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      .flex {
+        display: flex;
+      }
+
+      .inline-flex {
+        display: inline-flex;
+      }
+
+      .flex-col {
+        flex-direction: column;
+      }
+
+      .flex-1 {
+        flex: 1 1 0%;
+      }
+
+      .items-center {
+        align-items: center;
+      }
+
+      .justify-between {
+        justify-content: space-between;
+      }
+
+      .justify-center {
+        justify-content: center;
+      }
+
+      .gap-2 {
+        gap: 8px;
+      }
+
+      .gap-0\.5 {
+        gap: 2px;
+      }
+
+      .w-80 {
+        width: 320px;
+      }
+
+      .w-7 {
+        width: 28px;
+      }
+
+      .h-7 {
+        height: 28px;
+      }
+
+      .w-4 {
+        width: 16px;
+      }
+
+      .h-4 {
+        height: 16px;
+      }
+
+      .w-3\.5 {
+        width: 14px;
+      }
+
+      .h-3\.5 {
+        height: 14px;
+      }
+
+      .border-l {
+        border-left: 1px solid var(--border);
+      }
+
+      .border-b {
+        border-bottom: 1px solid var(--border);
+      }
+
+      .bg-background {
+        background: var(--background);
+      }
+
+      .bg-secondary {
+        background: var(--secondary);
+      }
+
+      .bg-secondary\/50 {
+        background: rgba(245, 245, 245, 0.72);
+      }
+
+      .rounded-full {
+        border-radius: 999px;
+      }
+
+      .rounded-lg {
+        border-radius: 10px;
+      }
+
+      .px-4 {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+
+      .px-3 {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+
+      .px-2\.5 {
+        padding-left: 10px;
+        padding-right: 10px;
+      }
+
+      .px-1\.5 {
+        padding-left: 6px;
+        padding-right: 6px;
+      }
+
+      .py-2\.5 {
+        padding-top: 10px;
+        padding-bottom: 10px;
+      }
+
+      .py-2 {
+        padding-top: 8px;
+        padding-bottom: 8px;
+      }
+
+      .py-1\.5 {
+        padding-top: 6px;
+        padding-bottom: 6px;
+      }
+
+      .py-0\.5 {
+        padding-top: 2px;
+        padding-bottom: 2px;
+      }
+
+      .py-8 {
+        padding-top: 32px;
+        padding-bottom: 32px;
+      }
+
+      .pt-1\.5 {
+        padding-top: 6px;
+      }
+
+      .mb-0\.5 {
+        margin-bottom: 2px;
+      }
+
+      .space-y-1 > * + * {
+        margin-top: 4px;
+      }
+
+      .overflow-y-auto {
+        overflow-y: auto;
+      }
+
+      .text-xs {
+        font-size: 12px;
+      }
+
+      .text-\[10px\] {
+        font-size: 10px;
+      }
+
+      .text-\[11px\] {
+        font-size: 11px;
+      }
+
+      .font-medium {
+        font-weight: 500;
+      }
+
+      .font-semibold {
+        font-weight: 600;
+      }
+
+      .font-mono {
+        font-family: "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+      }
+
+      .uppercase {
+        text-transform: uppercase;
+      }
+
+      .tracking-wider {
+        letter-spacing: 0.08em;
+      }
+
+      .text-center {
+        text-align: center;
+      }
+
+      .text-muted-foreground {
+        color: var(--muted);
+      }
+
+      .text-muted-foreground\/60 {
+        color: rgba(115, 115, 115, 0.6);
+      }
+
+      .text-muted-foreground\/50 {
+        color: rgba(115, 115, 115, 0.5);
+      }
+
+      .text-muted-foreground\/40 {
+        color: rgba(115, 115, 115, 0.4);
+      }
+
+      .text-foreground\/80 {
+        color: rgba(33, 33, 33, 0.8);
+      }
+
+      .text-blue-500 {
+        color: #2563eb;
+      }
+
+      .text-green-500 {
+        color: #22c55e;
+      }
+
+      .text-yellow-500 {
+        color: #eab308;
+      }
+
+      .text-destructive {
+        color: var(--destructive);
+      }
+
+      .whitespace-pre-wrap {
+        white-space: pre-wrap;
+      }
+
+      .break-all {
+        word-break: break-all;
+      }
+
+      .leading-relaxed {
+        line-height: 1.625;
+      }
+
+      .transition-colors {
+        transition: color 150ms ease, background-color 150ms ease;
+      }
+
+      .duration-150 {
+        transition-duration: 150ms;
+      }
+
+      .hover\:bg-secondary:hover {
+        background: var(--secondary);
+      }
+
+      .hover\:text-foreground:hover {
+        color: var(--foreground);
+      }
+
+      @media (min-width: 1024px) {
+        .lg\:flex {
+          display: flex;
+        }
+      }
+
+      .app {
+        height: 100vh;
+        display: flex;
+        flex-direction: row;
+        background: var(--background);
+      }
+
+      .app__main {
+        min-width: 0;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .topbar {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 10px 16px;
+        background: var(--background);
+      }
+
+      .topbar__row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .topbar__left,
+      .topbar__right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+      }
+
+      .brand,
+      .model-label {
+        font-size: 14px;
+        line-height: 1.3;
+        font-weight: 500;
+      }
+
+      .model-label {
+        max-width: min(52vw, 420px);
+      }
+
+      .model-picker {
+        max-width: 100%;
+        min-width: 0;
+        height: 28px;
+        border: 1px solid transparent;
+        border-radius: 10px;
+        background: transparent;
+        color: var(--foreground);
+        padding: 0 28px 0 8px;
+        font-size: 14px;
+        line-height: 1.3;
+        font-weight: 500;
+        appearance: none;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        background-image:
+          linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+          linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+        background-position:
+          calc(100% - 16px) 12px,
+          calc(100% - 11px) 12px;
+        background-size: 5px 5px, 5px 5px;
+        background-repeat: no-repeat;
+      }
+
+      .model-picker:hover,
+      .model-picker:focus {
+        background-color: var(--secondary);
+        border-color: var(--border);
+        outline: none;
+      }
+
+      .model-picker--hero {
+        height: 44px;
+        padding: 0 38px 0 14px;
+        border-radius: 14px;
+        font-size: 32px;
+        line-height: 1.1;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        background-position:
+          calc(100% - 22px) 20px,
+          calc(100% - 15px) 20px;
+        background-size: 7px 7px, 7px 7px;
+      }
+
+      .responding-label {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .icon-button,
+      .modal__close,
+      .modal__secondary,
+      .primary-button,
+      .suggestion-button {
+        transition: background-color 150ms ease, color 150ms ease, opacity 150ms ease, transform 150ms ease, box-shadow 200ms ease;
+      }
+
+      .icon-button {
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: 10px;
+        background: transparent;
+        color: var(--muted);
+      }
+
+      .icon-button:hover {
+        background: var(--secondary);
+        color: var(--foreground);
+      }
+
+      .conversation {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .messages-wrap {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+      }
+
+      .messages {
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .messages__inner {
+        width: min(768px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 24px 0;
+      }
+
+      .empty-state {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 16px 16px 32px;
+      }
+
+      .empty-state__hero {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 24px;
+      }
+
+      .empty-state__avatar {
+        width: 64px;
+        height: 64px;
+        display: grid;
+        place-items: center;
+        border-radius: 999px;
+        background: rgba(33, 33, 33, 0.08);
+        color: rgba(33, 33, 33, 0.6);
+      }
+
+      .empty-composer {
+        width: min(100%, 672px);
+        margin-bottom: 30px;
+      }
+
+      .suggestions {
+        width: min(100%, 448px);
+      }
+
+      .suggestions__label {
+        margin: 0 0 10px;
+        padding: 0 4px;
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: rgba(115, 115, 115, 0.5);
+      }
+
+      .suggestion-list {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .suggestion-button {
+        width: 100%;
+        border: 0;
+        border-radius: 12px;
+        background: transparent;
+        padding: 10px 14px;
+        text-align: left;
+      }
+
+      .suggestion-button:hover {
+        background: rgba(245, 245, 245, 0.6);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      }
+
+      .suggestion-button__title {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--foreground);
+      }
+
+      .suggestion-button__subtitle {
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .footer-note {
+        margin: 24px 0 0;
+        text-align: center;
+        font-size: 11px;
+        color: rgba(115, 115, 115, 0.6);
+      }
+
+      .message {
+        display: flex;
+        margin-bottom: 24px;
+      }
+
+      .message--user {
+        justify-content: flex-end;
+      }
+
+      .message--assistant {
+        justify-content: flex-start;
+      }
+
+      .message__bubble {
+        max-width: 100%;
+        font-size: 15px;
+        line-height: 1.7;
+        overflow-wrap: anywhere;
+      }
+
+      .message--user .message__bubble {
+        max-width: 70%;
+        border-radius: 16px;
+        background: var(--user-bubble);
+        padding: 10px 16px;
+      }
+
+      .message__content p,
+      .message__content ul,
+      .message__content ol,
+      .message__content pre,
+      .message__content blockquote {
+        margin: 0 0 0.9em;
+      }
+
+      .message__content p:last-child,
+      .message__content ul:last-child,
+      .message__content ol:last-child,
+      .message__content pre:last-child,
+      .message__content blockquote:last-child {
+        margin-bottom: 0;
+      }
+
+      .message__content ul,
+      .message__content ol {
+        padding-left: 1.25rem;
+      }
+
+      .message__content blockquote {
+        border-left: 2px solid var(--border);
+        padding-left: 16px;
+        color: var(--muted);
+        font-style: italic;
+      }
+
+      .message__content code {
+        padding: 0.12em 0.38em;
+        border-radius: 6px;
+        background: var(--secondary);
+        font-size: 13px;
+      }
+
+      .message__content pre {
+        margin: 12px 0;
+        padding: 16px;
+        border-radius: 12px;
+        background: var(--secondary);
+        overflow: auto;
+      }
+
+      .message__content pre code {
+        padding: 0;
+        background: transparent;
+      }
+
+      .streaming-indicator {
+        display: flex;
+        justify-content: flex-start;
+      }
+
+      .streaming-indicator__dots {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 12px 0;
+      }
+
+      .streaming-indicator__dots span {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--muted);
+        animation: pulse 1.4s ease-in-out infinite;
+      }
+
+      .streaming-indicator__dots span:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+
+      .streaming-indicator__dots span:nth-child(3) {
+        animation-delay: 0.4s;
+      }
+
+      @keyframes pulse {
+        0%, 100% { opacity: 0.35; }
+        50% { opacity: 1; }
+      }
+
+      .composer {
+        padding: 8px 16px 16px;
+        background: var(--background);
+      }
+
+      .composer__shell {
+        max-width: 768px;
+        margin: 0 auto;
+      }
+
+      .composer__card {
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        background: var(--assistant-bubble);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        transition: box-shadow 150ms ease, border-color 150ms ease;
+      }
+
+      .composer__card:focus-within {
+        border-color: rgba(33, 33, 33, 0.12);
+        box-shadow: 0 0 0 2px rgba(33, 33, 33, 0.08);
+      }
+
+      .composer__card--elevated {
+        box-shadow: 0 18px 42px rgba(0, 0, 0, 0.05);
+        border-color: rgba(229, 229, 229, 0.8);
+        backdrop-filter: blur(6px);
+      }
+
+      .composer__top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+      }
+
+      .composer__input {
+        flex: 1;
+        min-height: 24px;
+        max-height: 200px;
+        resize: none;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: var(--foreground);
+        font-size: 15px;
+        line-height: 1.6;
+        outline: none;
+      }
+
+      .composer__input::placeholder {
+        color: rgba(115, 115, 115, 0.4);
+      }
+
+      .settings-input:focus,
+      .settings-textarea:focus,
+      .settings-select:focus {
+        box-shadow: 0 0 0 2px rgba(33, 33, 33, 0.08);
+      }
+
+      .composer__send {
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: 999px;
+        background: var(--foreground);
+        color: var(--primary-foreground);
+      }
+
+      .composer__send:hover {
+        opacity: 0.8;
+      }
+
+      .composer__send:disabled {
+        opacity: 0.2;
+        cursor: not-allowed;
+      }
+
+      .composer__hint {
+        margin-top: 8px;
+        text-align: center;
+        color: rgba(115, 115, 115, 0.6);
+        font-size: 11px;
+      }
+
+      .error-banner {
+        display: none;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+        padding: 6px 10px;
+        border-radius: 10px;
+        background: rgba(220, 38, 38, 0.08);
+        color: var(--destructive);
+        font-size: 12px;
+      }
+
+      .error-banner.is-visible {
+        display: flex;
+      }
+
+      .error-banner__text {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .error-banner__button {
+        border: 0;
+        background: transparent;
+        color: inherit;
+        font-size: 12px;
+        padding: 2px;
+      }
+
+      .modal {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: var(--overlay);
+        backdrop-filter: blur(4px);
+      }
+
+      .modal.is-open {
+        display: flex;
+      }
+
+      .modal__card {
+        width: min(520px, 100%);
+        max-height: min(90vh, 820px);
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        background: var(--background);
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.16);
+        overflow: hidden;
+      }
+
+      .modal__header,
+      .modal__footer {
+        padding: 16px 20px;
+      }
+
+      .modal__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .modal__title {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 500;
+      }
+
+      .modal__close {
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: 10px;
+        background: transparent;
+        color: var(--foreground);
+      }
+
+      .modal__close:hover,
+      .modal__secondary:hover {
+        background: var(--secondary);
+      }
+
+      .modal__body {
+        padding: 20px;
+        display: grid;
+        gap: 18px;
+        overflow: auto;
+      }
+
+      .settings-field {
+        display: block;
+      }
+
+      .settings-label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .settings-input,
+      .settings-textarea,
+      .settings-select {
+        width: 100%;
+        height: 40px;
+        min-height: 40px;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: #fff;
+        color: var(--foreground);
+        outline: none;
+        appearance: none;
+      }
+
+      .settings-textarea {
+        height: auto;
+        min-height: 88px;
+        resize: none;
+      }
+
+      .settings-help {
+        margin: 6px 0 0;
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      .settings-inline {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .settings-inline > *:first-child {
+        flex: 1;
+      }
+
+      .settings-grid {
+        display: grid;
+        gap: 12px;
+      }
+
+      .settings-grid--two {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .settings-action {
+        flex: 0 0 auto;
+        height: 40px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: #fff;
+        color: var(--foreground);
+        padding: 0 14px;
+        font-size: 13px;
+        font-weight: 500;
+      }
+
+      .settings-action:hover {
+        background: var(--secondary);
+      }
+
+      .settings-action:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      .settings-status {
+        min-height: 18px;
+        margin: 6px 0 0;
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      .settings-status.is-success {
+        color: #15803d;
+      }
+
+      .settings-status.is-error {
+        color: var(--destructive);
+      }
+
+      .toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .toggle-copy {
+        font-size: 14px;
+      }
+
+      .toggle-copy span {
+        display: block;
+        margin-top: 3px;
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      .toggle-button {
+        position: relative;
+        width: 40px;
+        height: 20px;
+        border: 0;
+        border-radius: 999px;
+        background: var(--border);
+      }
+
+      .toggle-button::after {
+        content: "";
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #ffffff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+        transition: transform 120ms ease;
+      }
+
+      .toggle-button.is-on {
+        background: var(--primary);
+      }
+
+      .toggle-button.is-on::after {
+        transform: translateX(20px);
+      }
+
+      .modal__footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        border-top: 1px solid var(--border);
+      }
+
+      .modal__copy {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.6;
+      }
+
+      .modal__error-body {
+        margin-top: 12px;
+        max-height: min(50vh, 360px);
+        overflow: auto;
+        border-radius: 12px;
+        background: var(--secondary);
+        padding: 14px;
+        color: var(--foreground);
+        font-size: 12px;
+        line-height: 1.55;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      #debugPanel {
+        display: none !important;
+        min-height: 0;
+      }
+
+      #debugPanel.is-open {
+        display: flex !important;
+      }
+
+      #debugLog {
+        min-height: 0;
+      }
+
+      .debug-entry {
+        border-radius: 10px;
+        background: rgba(245, 245, 245, 0.72);
+        overflow: hidden;
+        animation: fade-up 180ms ease both;
+      }
+
+      .debug-entry__meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 9px 5px;
+        font-size: 10px;
+        color: var(--muted);
+      }
+
+      .debug-entry__spacer {
+        flex: 1;
+      }
+
+      .debug-entry__badge {
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+
+      .debug-entry__badge--request {
+        color: #2563eb;
+      }
+
+      .debug-entry__badge--response {
+        color: #15803d;
+      }
+
+      .debug-entry__badge--error {
+        color: var(--destructive);
+      }
+
+      .debug-entry__badge--info {
+        color: #a16207;
+      }
+
+      .debug-entry__kind {
+        display: none;
+      }
+
+      .debug-entry__body {
+        margin: 0;
+        padding: 0 9px 9px;
+        font-size: 10px;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        word-break: break-word;
+        overflow: visible;
+        tab-size: 2;
+        color: rgba(33, 33, 33, 0.8);
+      }
+
+      .modal__secondary {
+        border: 0;
+        border-radius: 10px;
+        background: transparent;
+        color: var(--foreground);
+        padding: 8px 14px;
+      }
+
+      .primary-button {
+        border: 0;
+        border-radius: 10px;
+        background: var(--primary);
+        color: var(--primary-foreground);
+        padding: 10px 16px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .primary-button:hover {
+        opacity: 0.92;
+      }
+
+      .waterfall {
+        animation: fade-up 320ms ease both;
+      }
+
+      @keyframes fade-up {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .icon-button:active,
+      .modal__close:active,
+      .modal__secondary:active,
+      .primary-button:active,
+      .suggestion-button:active,
+      .composer__send:active {
+        transform: scale(0.97);
+      }
+
+      @media (max-width: 720px) {
+        .topbar {
+          padding-left: 12px;
+          padding-right: 12px;
+        }
+
+        .empty-state__hero {
+          flex-direction: column;
+          gap: 12px;
+          margin-bottom: 20px;
+        }
+
+        .empty-state__model {
+          font-size: 28px;
+        }
+
+        .model-picker--hero {
+          font-size: 28px;
+        }
+
+        .messages__inner {
+          width: calc(100% - 24px);
+        }
+
+        .composer {
+          padding-left: 12px;
+          padding-right: 12px;
+          padding-bottom: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <div class="app__main">
+      <header class="topbar">
+        <div class="topbar__row">
+          <div class="topbar__left">
+            <div class="brand">Slate</div>
+            <div class="model-label">
+              <select id="topModelSelect" class="model-picker" aria-label="Select model">
+                <option value="">Select model</option>
+              </select>
+            </div>
+            <div class="responding-label hidden" id="respondingLabel">· Generating…</div>
+          </div>
+          <div class="topbar__right">
+            <button id="newChatButton" class="icon-button hidden" type="button" aria-label="New chat">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 5v14"></path>
+                <path d="M5 12h14"></path>
+              </svg>
+            </button>
+            <button id="settingsButton" class="icon-button" type="button" aria-label="Settings">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33 1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82 1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div id="topbarError" class="error-banner hidden" role="alert">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <span class="error-banner__text" id="errorText"></span>
+          <button id="dismissErrorButton" class="error-banner__button" type="button" aria-label="Dismiss error">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M18 6 6 18"></path>
+              <path d="m6 6 12 12"></path>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <section class="conversation">
+        <div class="messages-wrap" id="messagesWrap">
+          <div class="messages" id="messages">
+            <div class="empty-state" id="emptyState">
+              <div class="empty-state__hero waterfall" style="animation-delay: 0ms;">
+                <div class="empty-state__avatar" aria-hidden="true">
+                  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 8V4H8"></path>
+                    <rect x="4" y="8" width="16" height="12" rx="4"></rect>
+                    <path d="M2 14h2"></path>
+                    <path d="M20 14h2"></path>
+                    <path d="M15 13v2"></path>
+                    <path d="M9 13v2"></path>
+                  </svg>
+                </div>
+                <div class="empty-state__model">
+                  <select id="emptyModelSelect" class="model-picker model-picker--hero" aria-label="Select model">
+                    <option value="">Select model</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="empty-composer waterfall" style="animation-delay: 80ms;">
+                <div class="composer__card composer__card--elevated">
+                  <div class="composer__top">
+                    <textarea
+                      id="composerEmpty"
+                      class="composer__input"
+                      rows="1"
+                      placeholder="How can I help you today?"
+                    ></textarea>
+                    <button id="sendButtonEmpty" class="composer__send" type="button" aria-label="Send message">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M12 5v14"></path>
+                        <path d="m19 12-7-7-7 7"></path>
+                      </svg>
+                    </button>
+                    <button id="stopButtonEmpty" class="composer__send hidden" type="button" aria-label="Stop generation">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <rect x="6" y="6" width="12" height="12" rx="1"></rect>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="suggestions waterfall" style="animation-delay: 150ms;">
+                <p class="suggestions__label">Suggestions</p>
+                <div class="suggestion-list" id="suggestionList"></div>
+              </div>
+
+              <p class="footer-note">Slate can make mistakes. Verify important information.</p>
+            </div>
+          </div>
+        </div>
+
+        <section class="composer hidden" id="conversationComposer">
+          <div class="composer__shell">
+            <div class="composer__card">
+              <div class="composer__top">
+                <textarea
+                  id="composer"
+                  class="composer__input"
+                  rows="1"
+                  placeholder="How can I help you today?"
+                ></textarea>
+                <button id="sendButton" class="composer__send" type="button" aria-label="Send message">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 5v14"></path>
+                    <path d="m19 12-7-7-7 7"></path>
+                  </svg>
+                </button>
+                <button id="stopButton" class="composer__send hidden" type="button" aria-label="Stop generation">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <rect x="6" y="6" width="12" height="12" rx="1"></rect>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <p class="composer__hint">Slate can make mistakes. Verify important information.</p>
+          </div>
+        </section>
+      </section>
+
+      <div id="settingsModal" class="modal" aria-hidden="true">
+        <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+          <div class="modal__header">
+            <h2 id="settingsTitle" class="modal__title">Settings</h2>
+            <button id="closeSettingsButton" class="modal__close" type="button" aria-label="Close settings">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M18 6 6 18"></path>
+                <path d="m6 6 12 12"></path>
+              </svg>
+            </button>
+          </div>
+
+          <div class="modal__body">
+            <label class="settings-field">
+              <span class="settings-label">Provider</span>
+              <select id="providerInput" class="settings-select">
+                <option value="ollama">Ollama</option>
+                <option value="openai">OpenAI-compatible</option>
+                <option value="anthropic">Anthropic-compatible</option>
+              </select>
+            </label>
+
+            <label class="settings-field">
+              <span class="settings-label">API base URL</span>
+              <div class="settings-inline">
+              <input id="apiBaseUrlInput" class="settings-input" type="url" spellcheck="false" placeholder="http://127.0.0.1:12434/" />
+                <button id="testProviderButton" class="settings-action" type="button">Check</button>
+              </div>
+              <p id="providerStatus" class="settings-status"></p>
+            </label>
+
+            <label id="apiKeyField" class="settings-field hidden">
+              <span class="settings-label">API key</span>
+              <input id="apiKeyInput" class="settings-input" type="password" spellcheck="false" placeholder="sk-..." />
+              <p class="settings-help">Kept in memory only. Never stored.</p>
+            </label>
+
+            <label class="settings-field">
+              <span class="settings-label">Model</span>
+              <div class="settings-inline">
+                <select id="modelSelect" class="settings-select">
+                  <option value="">Load models from the provider</option>
+                </select>
+                <button id="reloadModelsButton" class="settings-action" type="button">Reload</button>
+              </div>
+              <p id="modelStatus" class="settings-status">Available models are loaded from the configured API.</p>
+            </label>
+
+            <label class="settings-field">
+              <span class="settings-label">System prompt (optional)</span>
+              <textarea id="systemPromptInput" class="settings-textarea" placeholder="You are a helpful assistant."></textarea>
+            </label>
+
+            <div class="settings-grid settings-grid--two">
+              <label class="settings-field">
+                <span class="settings-label">Max output tokens</span>
+                <input id="maxTokensInput" class="settings-input" type="number" min="1" step="1" inputmode="numeric" placeholder="Use provider default" />
+              </label>
+
+              <label class="settings-field">
+                <span class="settings-label">Temperature</span>
+                <input id="temperatureInput" class="settings-input" type="number" min="0" max="2" step="0.1" inputmode="decimal" placeholder="Use provider default" />
+              </label>
+
+              <label class="settings-field">
+                <span class="settings-label">Top P</span>
+                <input id="topPInput" class="settings-input" type="number" min="0" max="1" step="0.05" inputmode="decimal" placeholder="Use provider default" />
+              </label>
+
+              <label id="topKField" class="settings-field hidden">
+                <span class="settings-label">Top K</span>
+                <input id="topKInput" class="settings-input" type="number" min="1" step="1" inputmode="numeric" placeholder="Use provider default" />
+              </label>
+
+              <label id="presencePenaltyField" class="settings-field hidden">
+                <span class="settings-label">Presence penalty</span>
+                <input id="presencePenaltyInput" class="settings-input" type="number" min="-2" max="2" step="0.1" inputmode="decimal" placeholder="Use provider default" />
+              </label>
+
+              <label id="frequencyPenaltyField" class="settings-field hidden">
+                <span class="settings-label">Frequency penalty</span>
+                <input id="frequencyPenaltyInput" class="settings-input" type="number" min="-2" max="2" step="0.1" inputmode="decimal" placeholder="Use provider default" />
+              </label>
+            </div>
+
+            <label id="stopSequencesField" class="settings-field hidden">
+              <span class="settings-label">Stop sequences</span>
+              <textarea id="stopSequencesInput" class="settings-textarea" placeholder="One stop sequence per line"></textarea>
+              <p class="settings-help">Leave empty to use the provider default behavior.</p>
+            </label>
+
+            <div class="toggle-row">
+              <div class="toggle-copy">
+                <strong>Streaming</strong>
+                <span>Show tokens as they arrive</span>
+              </div>
+              <button id="streamingToggle" class="toggle-button is-on" type="button" aria-pressed="true"></button>
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-copy">
+                <strong>Debug sidebar</strong>
+                <span>Show request, response, and runtime logs</span>
+              </div>
+              <button id="debugToggle" class="toggle-button" type="button" aria-pressed="false"></button>
+            </div>
+          </div>
+
+          <div class="modal__footer">
+            <button id="cancelSettingsButton" class="modal__secondary" type="button">Cancel</button>
+            <button id="saveSettingsButton" class="primary-button" type="button">Save</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="fatalErrorModal" class="modal" aria-hidden="true">
+        <div class="modal__card" role="alertdialog" aria-modal="true" aria-labelledby="fatalErrorTitle">
+          <div class="modal__header">
+            <h2 id="fatalErrorTitle" class="modal__title">Backend error</h2>
+            <button id="closeFatalErrorButton" class="modal__close" type="button" aria-label="Close error dialog">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M18 6 6 18"></path>
+                <path d="m6 6 12 12"></path>
+              </svg>
+            </button>
+          </div>
+          <div class="modal__body">
+            <p class="modal__copy">
+              The provider returned a severe server error. The full backend message is shown below.
+            </p>
+            <pre id="fatalErrorText" class="modal__error-body"></pre>
+          </div>
+          <div class="modal__footer">
+            <button id="dismissFatalErrorButton" class="primary-button" type="button">Close</button>
+          </div>
+        </div>
+      </div>
+      </div>
+
+      <aside id="debugPanel" class="hidden lg:flex flex-col w-80 border-l bg-background" aria-label="Debug panel">
+        <div class="flex items-center justify-between px-4 py-2.5 border-b">
+          <div class="flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bug w-4 h-4 text-muted-foreground" aria-hidden="true">
+              <path d="m8 2 1.88 1.88"></path>
+              <path d="M14.12 3.88 16 2"></path>
+              <path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"></path>
+              <path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"></path>
+              <path d="M12 20v-9"></path>
+              <path d="M6.53 9C4.6 8.8 3 7.1 3 5"></path>
+              <path d="M6 13H2"></path>
+              <path d="M3 21c0-2.1 1.7-3.9 3.8-4"></path>
+              <path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"></path>
+              <path d="M22 13h-4"></path>
+              <path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"></path>
+            </svg>
+            <span class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Debug</span>
+            <span id="debugCount" class="text-[10px] text-muted-foreground/60 bg-secondary px-1.5 py-0.5 rounded-full">0</span>
+          </div>
+          <div class="flex items-center gap-0.5">
+            <button id="clearDebugButton" class="inline-flex items-center justify-center w-7 h-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors duration-150" type="button" aria-label="Clear debug log">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash2 w-3.5 h-3.5" aria-hidden="true">
+                <path d="M3 6h18"></path>
+                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                <line x1="10" x2="10" y1="11" y2="17"></line>
+                <line x1="14" x2="14" y1="11" y2="17"></line>
+              </svg>
+            </button>
+            <button id="closeDebugButton" class="inline-flex items-center justify-center w-7 h-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors duration-150" type="button" aria-label="Close debug panel">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x w-3.5 h-3.5" aria-hidden="true">
+                <path d="M18 6 6 18"></path>
+                <path d="m6 6 12 12"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div id="debugLog" class="flex-1 overflow-y-auto px-3 py-2 space-y-1 font-mono text-[11px]"></div>
+      </aside>
+    </div>
+
+    <script>
+      (() => {
+        const APP_DEFAULTS = {
+          suggestions: [
+            { title: "Help me write", subtitle: "a professional email to my team" },
+            { title: "Explain how", subtitle: "quantum computing works simply" },
+            { title: "Create a plan", subtitle: "for learning a new language" },
+            { title: "Compare and contrast", subtitle: "different JavaScript frameworks" },
+          ],
+          defaultProvider: "openai",
+          defaultStreaming: true,
+          defaultDebugPanel: true,
+          dmrOpenAiSystemPrompt: "You are a helpful assistant. Answer concisely and stop after your answer.",
+          dmrOpenAiRequiredStops: ["\nUser:", "\nAssistant:", "User:", "Human:"],
+          providers: {
+            ollama: {
+              label: "Ollama",
+              apiBaseUrl: "http://127.0.0.1:12434/",
+              apiKey: "",
+              model: "",
+              maxTokens: "512",
+              temperature: "0.7",
+              topP: "0.9",
+              topK: "40",
+              presencePenalty: "",
+              frequencyPenalty: "",
+              stopSequences: "",
+            },
+            openai: {
+              label: "OpenAI-compatible",
+              apiBaseUrl: "http://127.0.0.1:12434/engines/v1",
+              apiKey: "",
+              model: "",
+              maxTokens: "300",
+              temperature: "0.4",
+              topP: "1",
+              topK: "",
+              presencePenalty: "0",
+              frequencyPenalty: "0",
+              stopSequences: "",
+            },
+            anthropic: {
+              label: "Anthropic-compatible",
+              apiBaseUrl: "http://127.0.0.1:12434",
+              apiKey: "",
+              model: "",
+              maxTokens: "1024",
+              temperature: "0.7",
+              topP: "0.9",
+              topK: "40",
+              presencePenalty: "",
+              frequencyPenalty: "",
+              stopSequences: "",
+            },
+          },
+        };
+
+        const SUGGESTIONS = APP_DEFAULTS.suggestions;
+        const DMR_OPENAI_DEFAULT_SYSTEM_PROMPT = APP_DEFAULTS.dmrOpenAiSystemPrompt;
+        const DMR_OPENAI_REQUIRED_STOPS = APP_DEFAULTS.dmrOpenAiRequiredStops;
+
+        function createProviderProfiles() {
+          return {
+            ollama: { ...APP_DEFAULTS.providers.ollama },
+            openai: { ...APP_DEFAULTS.providers.openai },
+            anthropic: { ...APP_DEFAULTS.providers.anthropic },
+          };
+        }
+
+        function createInitialSettings() {
+          const base = APP_DEFAULTS.providers[APP_DEFAULTS.defaultProvider];
+          return {
+            provider: APP_DEFAULTS.defaultProvider,
+            apiBaseUrl: base.apiBaseUrl,
+            apiKey: base.apiKey,
+            model: base.model,
+            systemPrompt: "",
+            maxTokens: base.maxTokens,
+            temperature: base.temperature,
+            topP: base.topP,
+            topK: base.topK,
+            presencePenalty: base.presencePenalty,
+            frequencyPenalty: base.frequencyPenalty,
+            stopSequences: base.stopSequences,
+            streaming: APP_DEFAULTS.defaultStreaming,
+            debugPanel: APP_DEFAULTS.defaultDebugPanel,
+          };
+        }
+
+        const state = {
+          messages: [],
+          isLoading: false,
+          error: null,
+          availableModels: [],
+          providerStatus: { tone: "", text: "" },
+          modelsStatus: { tone: "", text: "" },
+          fatalError: "",
+          debugEntries: [],
+          providerProfiles: createProviderProfiles(),
+          settings: createInitialSettings(),
+          draftSettings: null,
+          draftProviderProfiles: null,
+          controller: null,
+        };
+
+        const refs = {
+          messagesWrap: document.getElementById("messagesWrap"),
+          messages: document.getElementById("messages"),
+          emptyState: document.getElementById("emptyState"),
+          emptyModelSelect: document.getElementById("emptyModelSelect"),
+          topModelSelect: document.getElementById("topModelSelect"),
+          respondingLabel: document.getElementById("respondingLabel"),
+          newChatButton: document.getElementById("newChatButton"),
+          settingsButton: document.getElementById("settingsButton"),
+          conversationComposer: document.getElementById("conversationComposer"),
+          composer: document.getElementById("composer"),
+          composerEmpty: document.getElementById("composerEmpty"),
+          sendButton: document.getElementById("sendButton"),
+          stopButton: document.getElementById("stopButton"),
+          sendButtonEmpty: document.getElementById("sendButtonEmpty"),
+          stopButtonEmpty: document.getElementById("stopButtonEmpty"),
+          topbarError: document.getElementById("topbarError"),
+          errorText: document.getElementById("errorText"),
+          dismissErrorButton: document.getElementById("dismissErrorButton"),
+          suggestionList: document.getElementById("suggestionList"),
+          settingsModal: document.getElementById("settingsModal"),
+          closeSettingsButton: document.getElementById("closeSettingsButton"),
+          cancelSettingsButton: document.getElementById("cancelSettingsButton"),
+          saveSettingsButton: document.getElementById("saveSettingsButton"),
+          fatalErrorModal: document.getElementById("fatalErrorModal"),
+          closeFatalErrorButton: document.getElementById("closeFatalErrorButton"),
+          dismissFatalErrorButton: document.getElementById("dismissFatalErrorButton"),
+          fatalErrorText: document.getElementById("fatalErrorText"),
+          debugPanel: document.getElementById("debugPanel"),
+          debugLog: document.getElementById("debugLog"),
+          debugCount: document.getElementById("debugCount"),
+          clearDebugButton: document.getElementById("clearDebugButton"),
+          closeDebugButton: document.getElementById("closeDebugButton"),
+          providerInput: document.getElementById("providerInput"),
+          apiBaseUrlInput: document.getElementById("apiBaseUrlInput"),
+          testProviderButton: document.getElementById("testProviderButton"),
+          providerStatus: document.getElementById("providerStatus"),
+          apiKeyField: document.getElementById("apiKeyField"),
+          apiKeyInput: document.getElementById("apiKeyInput"),
+          modelSelect: document.getElementById("modelSelect"),
+          reloadModelsButton: document.getElementById("reloadModelsButton"),
+          modelStatus: document.getElementById("modelStatus"),
+          systemPromptInput: document.getElementById("systemPromptInput"),
+          maxTokensInput: document.getElementById("maxTokensInput"),
+          temperatureInput: document.getElementById("temperatureInput"),
+          topPInput: document.getElementById("topPInput"),
+          topKField: document.getElementById("topKField"),
+          topKInput: document.getElementById("topKInput"),
+          presencePenaltyField: document.getElementById("presencePenaltyField"),
+          presencePenaltyInput: document.getElementById("presencePenaltyInput"),
+          frequencyPenaltyField: document.getElementById("frequencyPenaltyField"),
+          frequencyPenaltyInput: document.getElementById("frequencyPenaltyInput"),
+          stopSequencesField: document.getElementById("stopSequencesField"),
+          stopSequencesInput: document.getElementById("stopSequencesInput"),
+          streamingToggle: document.getElementById("streamingToggle"),
+          debugToggle: document.getElementById("debugToggle"),
+        };
+
+        const providerConfig = {
+          ollama: {
+            label: APP_DEFAULTS.providers.ollama.label,
+            baseUrl: APP_DEFAULTS.providers.ollama.apiBaseUrl,
+            model: "",
+          },
+          openai: {
+            label: APP_DEFAULTS.providers.openai.label,
+            baseUrl: APP_DEFAULTS.providers.openai.apiBaseUrl,
+            model: "",
+          },
+          anthropic: {
+            label: APP_DEFAULTS.providers.anthropic.label,
+            baseUrl: APP_DEFAULTS.providers.anthropic.apiBaseUrl,
+            model: "",
+          },
+        };
+
+        function createId() {
+          return "msg_" + Math.random().toString(36).slice(2, 10);
+        }
+
+        function timestampLabel() {
+          return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+        }
+
+        function safeStringify(value) {
+          try {
+            return JSON.stringify(value, null, 2);
+          } catch (_) {
+            return String(value);
+          }
+        }
+
+        function formatErrorDetails(error) {
+          if (!error) return "Unknown error";
+          if (typeof error === "string") return error;
+          const payload = {
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+          };
+          return safeStringify(payload);
+        }
+
+        function addDebugEntry(kind, payload) {
+          const entry = {
+            id: createId(),
+            kind: kind,
+            time: timestampLabel(),
+            text: typeof payload === "string" ? payload : safeStringify(payload),
+          };
+          state.debugEntries.push(entry);
+          state.debugEntries = state.debugEntries.slice(-100);
+          renderDebugPanel();
+        }
+
+        function classifyDebugEntry(kind) {
+          const normalized = String(kind || "").toLowerCase();
+          if (normalized.includes("request")) return { tone: "request", label: "REQ" };
+          if (normalized.includes("response")) return { tone: "response", label: "RES" };
+          if (normalized.includes("error") || normalized.includes("failure")) return { tone: "error", label: "ERR" };
+          return { tone: "info", label: "INF" };
+        }
+
+        function renderDebugPanel() {
+          refs.debugPanel.classList.toggle("is-open", Boolean(state.settings.debugPanel));
+          refs.debugCount.textContent = String(state.debugEntries.length);
+          refs.debugLog.innerHTML = "";
+
+          if (!state.settings.debugPanel) return;
+
+          if (!state.debugEntries.length) {
+            const empty = document.createElement("p");
+            empty.className = "text-muted-foreground/50 text-center py-8 text-[11px]";
+            empty.innerHTML = "No logs yet.<br>Send a message to see logs.";
+            refs.debugLog.appendChild(empty);
+            return;
+          }
+
+          state.debugEntries.forEach((entry) => {
+            const article = document.createElement("article");
+            const classification = classifyDebugEntry(entry.kind);
+            article.className = "debug-entry";
+            article.innerHTML =
+              '<div class="flex items-center gap-2 mb-0.5 px-2.5 pt-1.5">' +
+                '<span class="sr-only">' + escapeHtml(entry.kind) + '</span>' +
+                '<span class="debug-entry__badge debug-entry__badge--' + escapeHtml(classification.tone) + '">' + escapeHtml(classification.label) + '</span>' +
+                '<span class="text-muted-foreground/40">' + escapeHtml(entry.time) + '</span>' +
+              '</div>' +
+              '<pre class="debug-entry__body whitespace-pre-wrap break-all text-foreground/80 leading-relaxed">' + escapeHtml(entry.text) + '</pre>';
+            refs.debugLog.appendChild(article);
+          });
+
+          refs.debugLog.scrollTop = refs.debugLog.scrollHeight;
+        }
+
+        function runUiStep(label, fn) {
+          try {
+            return fn();
+          } catch (error) {
+            addDebugEntry("UI Step Failure", {
+              step: label,
+              error: {
+                name: error && error.name,
+                message: error && error.message,
+                stack: error && error.stack,
+              },
+            });
+            throw error;
+          }
+        }
+
+        async function runAsyncStep(label, fn) {
+          try {
+            return await fn();
+          } catch (error) {
+            addDebugEntry("Async Step Failure", {
+              step: label,
+              error: {
+                name: error && error.name,
+                message: error && error.message,
+                stack: error && error.stack,
+              },
+            });
+            throw error;
+          }
+        }
+
+        function escapeHtml(value) {
+          return String(value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+        }
+
+        function formatModelLabel(model) {
+          const value = String(model || "").trim();
+          if (!value) return "Select model";
+          const normalized = value.replace(/\/+$/, "");
+          const lastSlash = normalized.lastIndexOf("/");
+          return lastSlash >= 0 ? normalized.slice(lastSlash + 1) : normalized;
+        }
+
+        function renderInline(text) {
+          let safe = escapeHtml(text);
+          safe = safe.replace(/`([^`]+)`/g, "<code>$1</code>");
+          safe = safe.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+          safe = safe.replace(/\*([^*]+)\*/g, "<em>$1</em>");
+          safe = safe.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+          return safe;
+        }
+
+        function renderMarkdownLite(text) {
+          const normalized = String(text || "").replace(/\r\n/g, "\n");
+          const lines = normalized.split("\n");
+          const blocks = [];
+          let inCode = false;
+          let codeLines = [];
+          let listType = null;
+          let listItems = [];
+          let paragraph = [];
+
+          function flushParagraph() {
+            if (!paragraph.length) return;
+            blocks.push("<p>" + renderInline(paragraph.join(" ")) + "</p>");
+            paragraph = [];
+          }
+
+          function flushList() {
+            if (!listType || !listItems.length) return;
+            const tag = listType === "ol" ? "ol" : "ul";
+            blocks.push("<" + tag + ">" + listItems.map((item) => "<li>" + renderInline(item) + "</li>").join("") + "</" + tag + ">");
+            listType = null;
+            listItems = [];
+          }
+
+          function flushCode() {
+            if (!inCode) return;
+            blocks.push("<pre><code>" + escapeHtml(codeLines.join("\n")) + "</code></pre>");
+            inCode = false;
+            codeLines = [];
+          }
+
+          for (const line of lines) {
+            if (line.startsWith("```")) {
+              flushParagraph();
+              flushList();
+              if (inCode) {
+                flushCode();
+              } else {
+                inCode = true;
+                codeLines = [];
+              }
+              continue;
+            }
+
+            if (inCode) {
+              codeLines.push(line);
+              continue;
+            }
+
+            const orderedMatch = line.match(/^\d+\.\s+(.*)$/);
+            const unorderedMatch = line.match(/^[-*]\s+(.*)$/);
+            const quoteMatch = line.match(/^>\s?(.*)$/);
+
+            if (!line.trim()) {
+              flushParagraph();
+              flushList();
+              continue;
+            }
+
+            if (quoteMatch) {
+              flushParagraph();
+              flushList();
+              blocks.push("<blockquote>" + renderInline(quoteMatch[1]) + "</blockquote>");
+              continue;
+            }
+
+            if (orderedMatch) {
+              flushParagraph();
+              if (listType && listType !== "ol") flushList();
+              listType = "ol";
+              listItems.push(orderedMatch[1]);
+              continue;
+            }
+
+            if (unorderedMatch) {
+              flushParagraph();
+              if (listType && listType !== "ul") flushList();
+              listType = "ul";
+              listItems.push(unorderedMatch[1]);
+              continue;
+            }
+
+            flushList();
+            paragraph.push(line.trim());
+          }
+
+          flushParagraph();
+          flushList();
+          flushCode();
+
+          return blocks.join("");
+        }
+
+        function syncTextareas() {
+          const sources = [refs.composer, refs.composerEmpty];
+          const active = document.activeElement;
+          const source = active === refs.composerEmpty ? refs.composerEmpty : refs.composer;
+          const value = source.value;
+
+          sources.forEach((element) => {
+            if (!element) return;
+            if (element !== source) element.value = value;
+            element.style.height = "auto";
+            element.style.height = Math.min(element.scrollHeight, 200) + "px";
+          });
+        }
+
+        function setComposerValue(value, focusTarget) {
+          refs.composer.value = value;
+          refs.composerEmpty.value = value;
+          syncTextareas();
+          updateSendButtons();
+          if (focusTarget) focusTarget.focus();
+        }
+
+        function updateSendButtons() {
+          const hasValue = refs.composer.value.trim().length > 0;
+          refs.sendButton.disabled = !hasValue || state.isLoading;
+          refs.sendButtonEmpty.disabled = !hasValue || state.isLoading;
+          refs.sendButton.classList.toggle("hidden", state.isLoading);
+          refs.sendButtonEmpty.classList.toggle("hidden", state.isLoading);
+          refs.stopButton.classList.toggle("hidden", !state.isLoading);
+          refs.stopButtonEmpty.classList.toggle("hidden", !state.isLoading);
+        }
+
+        function setError(message) {
+          state.error = message || null;
+          refs.errorText.textContent = state.error || "";
+          refs.topbarError.classList.toggle("hidden", !state.error);
+          refs.topbarError.classList.toggle("is-visible", Boolean(state.error));
+          if (state.error) addDebugEntry("UI Error", state.error);
+        }
+
+        function syncProviderUi(settings) {
+          const provider = settings.provider;
+          const supportsApiKey = provider === "openai" || provider === "anthropic";
+          refs.apiKeyField.classList.toggle("hidden", !supportsApiKey);
+          refs.topKField.classList.toggle("hidden", !(provider === "anthropic" || provider === "ollama"));
+          refs.presencePenaltyField.classList.toggle("hidden", provider !== "openai");
+          refs.frequencyPenaltyField.classList.toggle("hidden", provider !== "openai");
+          refs.stopSequencesField.classList.toggle("hidden", provider === "ollama");
+          refs.apiBaseUrlInput.placeholder = providerConfig[provider].baseUrl;
+        }
+
+        function openFatalError(message) {
+          state.fatalError = message || "";
+          refs.fatalErrorText.textContent = state.fatalError;
+          refs.fatalErrorModal.classList.add("is-open");
+          refs.fatalErrorModal.setAttribute("aria-hidden", "false");
+          refs.dismissFatalErrorButton.focus();
+          addDebugEntry("Fatal Error", state.fatalError);
+        }
+
+        function closeFatalError() {
+          refs.fatalErrorModal.classList.remove("is-open");
+          refs.fatalErrorModal.setAttribute("aria-hidden", "true");
+        }
+
+        function setStatus(element, status) {
+          element.textContent = status && status.text ? status.text : "";
+          element.classList.toggle("is-success", Boolean(status && status.tone === "success"));
+          element.classList.toggle("is-error", Boolean(status && status.tone === "error"));
+        }
+
+        function updateStatusUi() {
+          setStatus(refs.providerStatus, state.providerStatus);
+          setStatus(refs.modelStatus, state.modelsStatus);
+        }
+
+        function clearStatuses() {
+          state.providerStatus = { tone: "", text: "" };
+          state.modelsStatus = { tone: "", text: "Available models are loaded from the configured API." };
+          updateStatusUi();
+        }
+
+        function getSettingsForLookup() {
+          return state.draftSettings || state.settings;
+        }
+
+        function cloneProviderProfiles(source) {
+          return {
+            ollama: { ...source.ollama },
+            openai: { ...source.openai },
+            anthropic: { ...source.anthropic },
+          };
+        }
+
+        function syncActiveProfile(targetProfiles, settings) {
+          targetProfiles[settings.provider] = {
+            apiBaseUrl: settings.apiBaseUrl,
+            apiKey: settings.apiKey,
+            model: settings.model,
+            maxTokens: settings.maxTokens,
+            temperature: settings.temperature,
+            topP: settings.topP,
+            topK: settings.topK,
+            presencePenalty: settings.presencePenalty,
+            frequencyPenalty: settings.frequencyPenalty,
+            stopSequences: settings.stopSequences,
+          };
+        }
+
+        function applyDraftProvider(provider) {
+          const profile = state.draftProviderProfiles[provider] || {
+            apiBaseUrl: providerConfig[provider].baseUrl,
+            apiKey: "",
+            model: providerConfig[provider].model,
+            maxTokens: provider === "anthropic" ? "1024" : provider === "openai" ? "300" : "512",
+            temperature: provider === "openai" ? "0.4" : "0.7",
+            topP: provider === "openai" ? "1" : "0.9",
+            topK: provider === "openai" ? "" : "40",
+            presencePenalty: "",
+            frequencyPenalty: "",
+            stopSequences: "",
+          };
+
+          state.draftSettings.provider = provider;
+          state.draftSettings.apiBaseUrl = profile.apiBaseUrl;
+          state.draftSettings.apiKey = profile.apiKey;
+          state.draftSettings.model = profile.model;
+          state.draftSettings.maxTokens = profile.maxTokens || "";
+          state.draftSettings.temperature = profile.temperature || "";
+          state.draftSettings.topP = profile.topP || "";
+          state.draftSettings.topK = profile.topK || "";
+          state.draftSettings.presencePenalty = profile.presencePenalty || "";
+          state.draftSettings.frequencyPenalty = profile.frequencyPenalty || "";
+          state.draftSettings.stopSequences = profile.stopSequences || "";
+
+          refs.providerInput.value = provider;
+          refs.apiBaseUrlInput.value = profile.apiBaseUrl;
+          refs.apiKeyInput.value = profile.apiKey;
+          refs.maxTokensInput.value = state.draftSettings.maxTokens;
+          refs.temperatureInput.value = state.draftSettings.temperature;
+          refs.topPInput.value = state.draftSettings.topP;
+          refs.topKInput.value = state.draftSettings.topK;
+          refs.presencePenaltyInput.value = state.draftSettings.presencePenalty;
+          refs.frequencyPenaltyInput.value = state.draftSettings.frequencyPenalty;
+          refs.stopSequencesInput.value = state.draftSettings.stopSequences;
+          populateSettingsModelSelect(profile.model);
+          syncProviderUi(state.draftSettings);
+        }
+
+        function getLookupHeaders(settings) {
+          const headers = {};
+          if (settings.provider === "openai" && settings.apiKey.trim()) {
+            headers.Authorization = "Bearer " + settings.apiKey.trim();
+          }
+          if (settings.provider === "anthropic") {
+            if (settings.apiKey.trim()) {
+              headers["x-api-key"] = settings.apiKey.trim();
+            }
+            headers["anthropic-version"] = "2023-06-01";
+          }
+          return headers;
+        }
+
+        function populateSettingsModelSelect(selectedModel) {
+          const current = selectedModel || "";
+          refs.modelSelect.innerHTML = "";
+
+          if (!state.availableModels.length) {
+            const placeholder = document.createElement("option");
+            placeholder.value = "";
+            placeholder.textContent = "Load models from the provider";
+            refs.modelSelect.appendChild(placeholder);
+            refs.modelSelect.value = "";
+            return;
+          }
+
+          state.availableModels.forEach((modelName) => {
+            const option = document.createElement("option");
+            option.value = modelName;
+            option.textContent = modelName;
+            refs.modelSelect.appendChild(option);
+          });
+
+          const nextModel = state.availableModels.indexOf(current) >= 0 ? current : state.availableModels[0];
+          refs.modelSelect.value = nextModel;
+          if (state.draftSettings) state.draftSettings.model = nextModel;
+        }
+
+        function populateVisibleModelSelect(select, selectedModel) {
+          const current = selectedModel || "";
+          select.innerHTML = "";
+
+          if (!state.availableModels.length) {
+            const placeholder = document.createElement("option");
+            placeholder.value = "";
+            placeholder.textContent = "Select model";
+            select.appendChild(placeholder);
+            select.value = "";
+            select.title = "No model selected";
+            return;
+          }
+
+          state.availableModels.forEach((modelName) => {
+            const option = document.createElement("option");
+            option.value = modelName;
+            option.textContent = formatModelLabel(modelName);
+            option.title = modelName;
+            select.appendChild(option);
+          });
+
+          const nextModel = state.availableModels.indexOf(current) >= 0 ? current : "";
+          select.value = nextModel;
+          select.title = nextModel || "No model selected";
+        }
+
+        function syncVisibleModelSelectors() {
+          populateVisibleModelSelect(refs.topModelSelect, state.settings.model);
+          populateVisibleModelSelect(refs.emptyModelSelect, state.settings.model);
+        }
+
+        async function fetchProviderModels(settings, options) {
+          const base = settings.apiBaseUrl.replace(/\/+$/, "");
+          if (!base) throw new Error("API base URL is required.");
+          const endpoint = settings.provider === "ollama"
+            ? base + "/api/tags"
+            : settings.provider === "anthropic"
+              ? base + "/engines/v1/models"
+              : base + "/models";
+          addDebugEntry("Provider Request", {
+            provider: settings.provider,
+            endpoint: endpoint,
+            method: "GET",
+          });
+          const response = await fetch(endpoint, {
+            method: "GET",
+            headers: getLookupHeaders(settings),
+          });
+
+          if (!response.ok) {
+            const body = await response.text();
+            addDebugEntry("Provider Response", {
+              status: response.status,
+              statusText: response.statusText,
+              body: body,
+            });
+            if (response.status >= 500 && (!options || options.showFatal !== false)) {
+              openFatalError(body || ("Provider returned " + response.status + "."));
+            }
+            throw new Error("Provider check failed (" + response.status + "): " + body.slice(0, 160));
+          }
+
+          const data = await response.json();
+          addDebugEntry("Provider Response", {
+            status: response.status,
+            statusText: response.statusText,
+            body: data,
+          });
+          const models = settings.provider === "ollama"
+            ? ((data && data.models) || []).map((entry) => entry && entry.name).filter(Boolean)
+            : ((data && data.data) || []).map((entry) => entry && entry.id).filter(Boolean);
+
+          if (!models.length) {
+            throw new Error("The provider responded, but no models were returned.");
+          }
+
+          return models;
+        }
+
+        async function refreshProviderConnection(options) {
+          const settings = getSettingsForLookup();
+          const silent = options && options.silent;
+          const requestedFocus = options && options.focusSelect;
+
+          refs.testProviderButton.disabled = true;
+          refs.reloadModelsButton.disabled = true;
+
+          if (!silent) {
+            state.providerStatus = { tone: "", text: "Checking provider…" };
+            state.modelsStatus = { tone: "", text: "Loading models…" };
+            updateStatusUi();
+          }
+
+          try {
+            const models = await fetchProviderModels(settings, { showFatal: !silent });
+            state.availableModels = models;
+            if (!settings.model && models.length) {
+              settings.model = models[0];
+            }
+            populateSettingsModelSelect(settings.model);
+            if (settings === state.settings) {
+              syncActiveProfile(state.providerProfiles, state.settings);
+            }
+            if (settings === state.draftSettings) {
+              syncActiveProfile(state.draftProviderProfiles, state.draftSettings);
+            }
+            syncVisibleModelSelectors();
+            state.providerStatus = { tone: "success", text: "Connection successful." };
+            state.modelsStatus = { tone: "success", text: models.length + " model" + (models.length === 1 ? "" : "s") + " loaded." };
+            updateStatusUi();
+            if (requestedFocus) refs.modelSelect.focus();
+          } catch (error) {
+            state.availableModels = [];
+            populateSettingsModelSelect("");
+            syncVisibleModelSelectors();
+            const message = error && error.message ? error.message : "Could not reach the provider.";
+            state.providerStatus = { tone: "error", text: message };
+            state.modelsStatus = { tone: "error", text: "Model list could not be loaded." };
+            updateStatusUi();
+          } finally {
+            refs.testProviderButton.disabled = false;
+            refs.reloadModelsButton.disabled = false;
+          }
+        }
+
+        function openSettings() {
+          state.draftSettings = { ...state.settings };
+          state.draftProviderProfiles = cloneProviderProfiles(state.providerProfiles);
+          syncActiveProfile(state.draftProviderProfiles, state.draftSettings);
+          refs.providerInput.value = state.draftSettings.provider;
+          refs.apiBaseUrlInput.value = state.draftSettings.apiBaseUrl;
+          refs.apiKeyInput.value = state.draftSettings.apiKey;
+          refs.systemPromptInput.value = state.draftSettings.systemPrompt;
+          refs.maxTokensInput.value = state.draftSettings.maxTokens;
+          refs.temperatureInput.value = state.draftSettings.temperature;
+          refs.topPInput.value = state.draftSettings.topP;
+          refs.topKInput.value = state.draftSettings.topK;
+          refs.presencePenaltyInput.value = state.draftSettings.presencePenalty;
+          refs.frequencyPenaltyInput.value = state.draftSettings.frequencyPenalty;
+          refs.stopSequencesInput.value = state.draftSettings.stopSequences;
+          refs.streamingToggle.classList.toggle("is-on", state.draftSettings.streaming);
+          refs.streamingToggle.setAttribute("aria-pressed", String(state.draftSettings.streaming));
+          refs.debugToggle.classList.toggle("is-on", state.draftSettings.debugPanel);
+          refs.debugToggle.setAttribute("aria-pressed", String(state.draftSettings.debugPanel));
+          clearStatuses();
+          populateSettingsModelSelect(state.draftSettings.model);
+          syncProviderUi(state.draftSettings);
+          refs.settingsModal.classList.add("is-open");
+          refs.settingsModal.setAttribute("aria-hidden", "false");
+          refs.providerInput.focus();
+          refreshProviderConnection({ silent: true, focusSelect: false });
+        }
+
+        function closeSettings() {
+          refs.settingsModal.classList.remove("is-open");
+          refs.settingsModal.setAttribute("aria-hidden", "true");
+          refs.settingsButton.focus();
+        }
+
+        function renderSuggestions() {
+          refs.suggestionList.innerHTML = "";
+          SUGGESTIONS.forEach((suggestion, index) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "suggestion-button waterfall";
+            button.style.animationDelay = index * 60 + "ms";
+            button.innerHTML =
+              '<span class="suggestion-button__title">' + escapeHtml(suggestion.title) + " </span>" +
+              '<span class="suggestion-button__subtitle">' + escapeHtml(suggestion.subtitle) + "</span>";
+            button.addEventListener("click", () => {
+              setComposerValue(suggestion.title + " " + suggestion.subtitle, refs.composerEmpty);
+            });
+            refs.suggestionList.appendChild(button);
+          });
+        }
+
+        function renderMessages() {
+          const nearBottom =
+            refs.messagesWrap.scrollHeight - refs.messagesWrap.scrollTop - refs.messagesWrap.clientHeight < 120;
+
+          refs.messages.innerHTML = "";
+
+          if (!state.messages.length) {
+            refs.messages.appendChild(refs.emptyState);
+          } else {
+            const inner = document.createElement("div");
+            inner.className = "messages__inner";
+
+            state.messages.forEach((message) => {
+              const article = document.createElement("article");
+              article.className = "message message--" + message.role;
+
+              const bubble = document.createElement("div");
+              bubble.className = "message__bubble";
+
+              const content = document.createElement("div");
+              content.className = "message__content";
+              content.innerHTML =
+                message.role === "assistant" ? renderMarkdownLite(message.content) : "<p>" + escapeHtml(message.content) + "</p>";
+
+              bubble.appendChild(content);
+
+              article.appendChild(bubble);
+              inner.appendChild(article);
+            });
+
+            if (state.isLoading && state.messages[state.messages.length - 1].role === "user") {
+              const loading = document.createElement("div");
+              loading.className = "streaming-indicator";
+              loading.innerHTML = '<div class="streaming-indicator__dots"><span></span><span></span><span></span></div>';
+              inner.appendChild(loading);
+            }
+
+            refs.messages.appendChild(inner);
+          }
+
+          if (nearBottom) {
+            refs.messagesWrap.scrollTop = refs.messagesWrap.scrollHeight;
+          }
+        }
+
+        function updateMeta() {
+          const hasMessages = state.messages.length > 0;
+          syncVisibleModelSelectors();
+          refs.respondingLabel.classList.toggle("hidden", !state.isLoading);
+          refs.newChatButton.classList.toggle("hidden", !hasMessages);
+          refs.conversationComposer.classList.toggle("hidden", !hasMessages);
+          updateSendButtons();
+        }
+
+        function render() {
+          runUiStep("renderMessages", renderMessages);
+          runUiStep("updateMeta", updateMeta);
+          runUiStep("renderDebugPanel", renderDebugPanel);
+        }
+
+        function resetConversation() {
+          if (state.controller) state.controller.abort();
+          state.messages = [];
+          state.isLoading = false;
+          state.controller = null;
+          setComposerValue("", refs.composerEmpty);
+          setError(null);
+          render();
+        }
+
+        function buildApiMessages() {
+          const apiMessages = [];
+          if (state.settings.systemPrompt.trim()) {
+            apiMessages.push({ role: "system", content: state.settings.systemPrompt.trim() });
+          }
+          state.messages.forEach((message) => {
+            apiMessages.push({ role: message.role, content: message.content });
+          });
+          return apiMessages;
+        }
+
+        function buildApiMessagesWithSystem(systemPromptText) {
+          const apiMessages = [];
+          if (String(systemPromptText || "").trim()) {
+            apiMessages.push({ role: "system", content: String(systemPromptText).trim() });
+          }
+          state.messages.forEach((message) => {
+            apiMessages.push({ role: message.role, content: message.content });
+          });
+          return apiMessages;
+        }
+
+        function buildAnthropicMessages() {
+          return state.messages.map((message) => ({
+            role: message.role,
+            content: message.content,
+          }));
+        }
+
+        function parseOptionalInt(value) {
+          const trimmed = String(value || "").trim();
+          if (!trimmed) return undefined;
+          const parsed = Number.parseInt(trimmed, 10);
+          return Number.isFinite(parsed) ? parsed : undefined;
+        }
+
+        function parseOptionalFloat(value) {
+          const trimmed = String(value || "").trim();
+          if (!trimmed) return undefined;
+          const parsed = Number.parseFloat(trimmed);
+          return Number.isFinite(parsed) ? parsed : undefined;
+        }
+
+        function parseStopSequences(value) {
+          return String(value || "")
+            .split("\n")
+            .map((entry) => entry.trim())
+            .filter(Boolean);
+        }
+
+        function clamp(value, min, max) {
+          return Math.min(Math.max(value, min), max);
+        }
+
+        function uniqueValues(values) {
+          return Array.from(new Set(values.filter(Boolean)));
+        }
+
+        function buildRequestBody() {
+          const provider = state.settings.provider;
+          const maxTokens = parseOptionalInt(state.settings.maxTokens);
+          const temperature = parseOptionalFloat(state.settings.temperature);
+          const topP = parseOptionalFloat(state.settings.topP);
+          const topK = parseOptionalInt(state.settings.topK);
+          const presencePenalty = parseOptionalFloat(state.settings.presencePenalty);
+          const frequencyPenalty = parseOptionalFloat(state.settings.frequencyPenalty);
+          const stopSequences = parseStopSequences(state.settings.stopSequences);
+
+          if (provider === "anthropic") {
+            const requestBody = {
+              model: state.settings.model,
+              messages: buildAnthropicMessages(),
+              max_tokens: maxTokens || 1024,
+              stream: state.settings.streaming,
+            };
+
+            if (state.settings.systemPrompt.trim()) requestBody.system = state.settings.systemPrompt.trim();
+            if (temperature !== undefined) requestBody.temperature = temperature;
+            if (topP !== undefined) requestBody.top_p = topP;
+            if (topK !== undefined) requestBody.top_k = topK;
+            if (stopSequences.length) requestBody.stop_sequences = stopSequences;
+            return requestBody;
+          }
+
+          if (provider === "ollama") {
+            const requestBody = {
+              model: state.settings.model,
+              messages: buildApiMessages(),
+              stream: state.settings.streaming,
+            };
+            const options = {};
+            if (maxTokens !== undefined) options.num_predict = maxTokens;
+            if (temperature !== undefined) options.temperature = temperature;
+            if (topP !== undefined) options.top_p = topP;
+            if (topK !== undefined) options.top_k = topK;
+            if (stopSequences.length) options.stop = stopSequences;
+            if (Object.keys(options).length) requestBody.options = options;
+            return requestBody;
+          }
+
+          const requestBody = {
+            model: state.settings.model,
+            messages: buildApiMessagesWithSystem(state.settings.systemPrompt.trim() || DMR_OPENAI_DEFAULT_SYSTEM_PROMPT),
+            stream: state.settings.streaming,
+          };
+
+          requestBody.max_tokens = clamp(maxTokens !== undefined ? maxTokens : 300, 300, 500);
+          requestBody.temperature = temperature !== undefined ? temperature : 0.4;
+          if (topP !== undefined) requestBody.top_p = topP;
+          if (presencePenalty !== undefined) requestBody.presence_penalty = presencePenalty;
+          if (frequencyPenalty !== undefined) requestBody.frequency_penalty = frequencyPenalty;
+          requestBody.stop = uniqueValues([...DMR_OPENAI_REQUIRED_STOPS, ...stopSequences]);
+          return requestBody;
+        }
+
+        function parseSseChunk(chunkText, onDelta, onDone) {
+          const events = chunkText.split("\n\n");
+          events.forEach((event) => {
+            const lines = event.split("\n");
+            lines.forEach((line) => {
+              const trimmed = line.trim();
+              if (!trimmed.startsWith("data:")) return;
+              const data = trimmed.slice(5).trim();
+              if (!data) return;
+              if (data === "[DONE]") {
+                onDone();
+                return;
+              }
+              try {
+                const parsed = JSON.parse(data);
+                const delta = parsed && parsed.choices && parsed.choices[0] && parsed.choices[0].delta && parsed.choices[0].delta.content;
+                if (typeof delta === "string") onDelta(delta);
+              } catch (_) {}
+            });
+          });
+        }
+
+        function parseAnthropicChunk(chunkText, onDelta, onDone) {
+          const events = chunkText.split("\n\n");
+          events.forEach((event) => {
+            const lines = event.split("\n");
+            lines.forEach((line) => {
+              const trimmed = line.trim();
+              if (!trimmed.startsWith("data:")) return;
+              const data = trimmed.slice(5).trim();
+              if (!data) return;
+              try {
+                const parsed = JSON.parse(data);
+                const deltaText = parsed && parsed.delta && parsed.delta.text;
+                if (typeof deltaText === "string" && deltaText) onDelta(deltaText);
+                if (parsed && parsed.type === "message_stop") onDone();
+              } catch (_) {}
+            });
+          });
+        }
+
+        function parseOllamaChunk(chunkText, onDelta, onDone) {
+          const lines = chunkText.split("\n");
+          lines.forEach((line) => {
+            const trimmed = line.trim();
+            if (!trimmed) return;
+            try {
+              const parsed = JSON.parse(trimmed);
+              const delta = parsed && parsed.message && parsed.message.content;
+              if (typeof delta === "string" && delta) onDelta(delta);
+              if (parsed && parsed.done) onDone();
+            } catch (_) {}
+          });
+        }
+
+        function parseJsonText(text) {
+          return JSON.parse(text);
+        }
+
+        function parseApiTextResponse(text, provider) {
+          const raw = String(text || "").trim();
+          if (!raw) return {};
+
+          try {
+            return parseJsonText(raw);
+          } catch (_) {
+            if (provider === "ollama") {
+              const lines = raw.split("\n").map((line) => line.trim()).filter(Boolean);
+              for (let index = lines.length - 1; index >= 0; index -= 1) {
+                try {
+                  return parseJsonText(lines[index]);
+                } catch (_) {}
+              }
+            }
+            throw new Error("The provider returned a response body that could not be parsed.");
+          }
+        }
+
+        function normalizeParagraphKey(text) {
+          return String(text || "")
+            .toLowerCase()
+            .replace(/\s+/g, " ")
+            .replace(/[“”"'.!,?:;`*_~\-]+/g, "")
+            .trim();
+        }
+
+        function isReasoningParagraph(text) {
+          const normalized = normalizeParagraphKey(text);
+          return (
+            normalized.startsWith("certainly it seems like you want") ||
+            normalized.startsWith("it seems like you want") ||
+            normalized.startsWith("ill keep the response") ||
+            normalized.startsWith("i will keep the response") ||
+            normalized.startsWith("the user wants") ||
+            normalized.startsWith("the user is asking") ||
+            normalized.startsWith("i should") ||
+            normalized.startsWith("let me think") ||
+            normalized.startsWith("got it")
+          );
+        }
+
+        function isRestartParagraph(text) {
+          const trimmed = String(text || "").trim();
+          return /^(sure|absolutely|certainly|here(?:'s| is)|below is)/i.test(trimmed);
+        }
+
+        function cleanupAssistantContent(text) {
+          const raw = String(text || "").replace(/\r\n/g, "\n").trim();
+          if (!raw) return { content: "", changed: false };
+
+          const paragraphs = raw.split(/\n\s*\n/).map((entry) => entry.trim()).filter(Boolean);
+          if (!paragraphs.length) {
+            return { content: raw, changed: false };
+          }
+
+          const cleaned = [];
+          const seenKeys = new Set();
+          let sawOpening = false;
+          let changed = false;
+          let accumulatedLength = 0;
+
+          for (const paragraph of paragraphs) {
+            const key = normalizeParagraphKey(paragraph);
+            if (!key) continue;
+
+            if (!cleaned.length && isReasoningParagraph(paragraph)) {
+              changed = true;
+              continue;
+            }
+
+            if (seenKeys.has(key) && key.length > 24) {
+              changed = true;
+              break;
+            }
+
+            if (isRestartParagraph(paragraph)) {
+              if (sawOpening && accumulatedLength > 280) {
+                changed = true;
+                break;
+              }
+              sawOpening = true;
+            }
+
+            cleaned.push(paragraph);
+            seenKeys.add(key);
+            accumulatedLength += paragraph.length;
+          }
+
+          const content = cleaned.join("\n\n").trim() || raw;
+          return { content, changed: changed && content !== raw };
+        }
+
+        function extractAssistantContent(data, provider) {
+          let content = "";
+          if (provider === "anthropic") {
+            content = ((data && data.content) || [])
+              .map((block) => (block && typeof block.text === "string" ? block.text : ""))
+              .join("");
+          } else {
+            content = provider === "ollama"
+              ? (data && data.message && data.message.content) || ""
+              : (data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "";
+          }
+          const cleaned = cleanupAssistantContent(content);
+          if (cleaned.changed) {
+            addDebugEntry("Chat Cleanup", {
+              provider: provider,
+              originalLength: content.length,
+              cleanedLength: cleaned.content.length,
+            });
+          }
+          return cleaned.content;
+        }
+
+        function validateProviderResponse(data, provider) {
+          if (provider !== "openai") return;
+          const promptTokens = data && data.usage && data.usage.prompt_tokens;
+          if (typeof promptTokens === "number" && promptTokens < 20) {
+            throw new Error("OpenAI-compatible response indicates the system prompt was not applied correctly.");
+          }
+        }
+
+        async function requestJsonCompletion(endpoint, headers, requestBody, provider, label) {
+          addDebugEntry(label || "Chat Retry Request", {
+            provider: provider,
+            endpoint: endpoint,
+            headers: headers,
+            body: requestBody,
+          });
+
+          const retryResponse = await runAsyncStep("retry fetch chat response", async () => {
+            return await fetch(endpoint, {
+              method: "POST",
+              headers: headers,
+              body: JSON.stringify(requestBody),
+            });
+          });
+
+          const rawText = await runAsyncStep("retry response.text", async () => {
+            return await retryResponse.text();
+          });
+
+          addDebugEntry("Chat Retry Raw Response", rawText);
+
+          if (!retryResponse.ok) {
+            if (retryResponse.status >= 500) {
+              openFatalError(rawText || ("API returned " + retryResponse.status + "."));
+            }
+            throw new Error("API error " + retryResponse.status + ": " + rawText.slice(0, 200));
+          }
+
+          const data = runUiStep("retry parseApiTextResponse", () => {
+            return parseApiTextResponse(rawText, provider);
+          });
+          runUiStep("retry validateProviderResponse", () => {
+            validateProviderResponse(data, provider);
+          });
+
+          addDebugEntry("Chat Retry Response", {
+            status: retryResponse.status,
+            statusText: retryResponse.statusText,
+            body: data,
+          });
+
+          return data;
+        }
+
+        async function fetchWithAnthropicFallback(primaryEndpoint, fallbackEndpoint, headers, requestBody, controller) {
+          addDebugEntry("Chat Request", {
+            provider: state.settings.provider,
+            endpoint: primaryEndpoint,
+            headers: headers,
+            body: requestBody,
+          });
+
+          let response = await runAsyncStep("fetch chat response", async () => {
+            return await fetch(primaryEndpoint, {
+              method: "POST",
+              headers: headers,
+              body: JSON.stringify(requestBody),
+              signal: controller.signal,
+            });
+          });
+
+          if (response.status !== 404) {
+            return { response, endpoint: primaryEndpoint };
+          }
+
+          addDebugEntry("Chat Fallback", {
+            provider: "anthropic",
+            reason: "Primary Anthropic endpoint returned 404. Retrying fallback endpoint.",
+            from: primaryEndpoint,
+            to: fallbackEndpoint,
+          });
+
+          addDebugEntry("Chat Request", {
+            provider: state.settings.provider,
+            endpoint: fallbackEndpoint,
+            headers: headers,
+            body: requestBody,
+          });
+
+          response = await runAsyncStep("fetch chat response fallback", async () => {
+            return await fetch(fallbackEndpoint, {
+              method: "POST",
+              headers: headers,
+              body: JSON.stringify(requestBody),
+              signal: controller.signal,
+            });
+          });
+
+          return { response, endpoint: fallbackEndpoint };
+        }
+
+        async function retryOllamaAsNonStream(endpoint, headers) {
+          addDebugEntry("Chat Fallback", "Ollama response was empty. Retrying with stream=false.");
+          const requestBody = buildRequestBody();
+          requestBody.stream = false;
+          const retryData = await requestJsonCompletion(endpoint, headers, requestBody, state.settings.provider, "Chat Retry Request");
+          const retryContent = extractAssistantContent(retryData, state.settings.provider);
+          if (!retryContent.trim()) {
+            throw new Error("The provider returned an empty assistant response.");
+          }
+          return retryContent;
+        }
+
+        async function sendMessage() {
+          const content = refs.composer.value.trim();
+          if (!content || state.isLoading) return;
+
+          const base = state.settings.apiBaseUrl.replace(/\/+$/, "");
+          if (!base) {
+            setError("API base URL is required. Open settings to configure.");
+            return;
+          }
+          if (!state.settings.model.trim()) {
+            setError("Model is required. Open settings to configure.");
+            return;
+          }
+
+          setError(null);
+
+          const userMessage = {
+            id: createId(),
+            role: "user",
+            content: content,
+            createdAt: Date.now(),
+          };
+
+          state.messages.push(userMessage);
+          setComposerValue("", refs.composer);
+          state.isLoading = true;
+          render();
+
+          const assistantMessage = {
+            id: createId(),
+            role: "assistant",
+            content: "",
+            createdAt: Date.now(),
+          };
+
+          const controller = new AbortController();
+          state.controller = controller;
+
+          try {
+            const endpoint = state.settings.provider === "ollama"
+              ? base + "/api/chat"
+              : state.settings.provider === "anthropic"
+                ? base + "/v1/messages"
+                : base + "/chat/completions";
+            const anthropicFallbackEndpoint = state.settings.provider === "anthropic"
+              ? base + "/anthropic/v1/messages"
+              : null;
+            const headers = {
+              "Content-Type": "application/json",
+              ...getLookupHeaders(state.settings),
+            };
+            const requestBody = buildRequestBody();
+            let response;
+            let resolvedEndpoint = endpoint;
+
+            if (state.settings.provider === "anthropic") {
+              const result = await fetchWithAnthropicFallback(endpoint, anthropicFallbackEndpoint, headers, requestBody, controller);
+              response = result.response;
+              resolvedEndpoint = result.endpoint;
+            } else {
+              addDebugEntry("Chat Request", {
+                provider: state.settings.provider,
+                endpoint: endpoint,
+                headers: headers,
+                body: requestBody,
+              });
+
+              response = await runAsyncStep("fetch chat response", async () => {
+                return await fetch(endpoint, {
+                  method: "POST",
+                  headers: headers,
+                  body: JSON.stringify(requestBody),
+                  signal: controller.signal,
+                });
+              });
+            }
+
+            if (!response.ok) {
+              const body = await response.text();
+              addDebugEntry("Chat Response", {
+                status: response.status,
+                statusText: response.statusText,
+                endpoint: resolvedEndpoint,
+                body: body,
+              });
+              if (response.status >= 500) {
+                openFatalError(body || ("API returned " + response.status + "."));
+              }
+              throw new Error("API error " + response.status + ": " + body.slice(0, 200));
+            }
+
+            const contentType = (response.headers.get("content-type") || "").toLowerCase();
+            const useStreaming =
+              Boolean(state.settings.streaming && response.body) &&
+              (
+                (state.settings.provider === "ollama" &&
+                  !contentType.includes("application/json") &&
+                  !contentType.includes("text/json")) ||
+                ((state.settings.provider === "openai" || state.settings.provider === "anthropic") && contentType.includes("text/event-stream"))
+              );
+
+            if (useStreaming) {
+              state.messages.push(assistantMessage);
+              render();
+
+              const reader = runUiStep("response.body.getReader", () => response.body.getReader());
+              const decoder = new TextDecoder();
+              let buffer = "";
+              let doneStreaming = false;
+              let sawStructuredChunk = false;
+
+              while (!doneStreaming) {
+                const result = await runAsyncStep("stream reader.read", async () => {
+                  return await reader.read();
+                });
+                if (result.done) break;
+                buffer += decoder.decode(result.value, { stream: true });
+
+                if (state.settings.provider === "ollama") {
+                  const lines = buffer.split("\n");
+                  buffer = lines.pop() || "";
+                  runUiStep("parseOllamaChunk", () => {
+                    parseOllamaChunk(lines.join("\n"), (delta) => {
+                      sawStructuredChunk = true;
+                      assistantMessage.content += delta;
+                      renderMessages();
+                    }, () => {
+                      sawStructuredChunk = true;
+                      doneStreaming = true;
+                    });
+                  });
+                } else if (state.settings.provider === "anthropic") {
+                  const boundary = buffer.lastIndexOf("\n\n");
+                  if (boundary === -1) continue;
+                  const consumable = buffer.slice(0, boundary);
+                  buffer = buffer.slice(boundary + 2);
+                  runUiStep("parseAnthropicChunk", () => {
+                    parseAnthropicChunk(consumable, (delta) => {
+                      sawStructuredChunk = true;
+                      assistantMessage.content += delta;
+                      renderMessages();
+                    }, () => {
+                      sawStructuredChunk = true;
+                      doneStreaming = true;
+                    });
+                  });
+                } else {
+                  const boundary = buffer.lastIndexOf("\n\n");
+                  if (boundary === -1) continue;
+                  const consumable = buffer.slice(0, boundary);
+                  buffer = buffer.slice(boundary + 2);
+                  runUiStep("parseSseChunk", () => {
+                    parseSseChunk(consumable, (delta) => {
+                      sawStructuredChunk = true;
+                      assistantMessage.content += delta;
+                      renderMessages();
+                    }, () => {
+                      sawStructuredChunk = true;
+                      doneStreaming = true;
+                    });
+                  });
+                }
+              }
+
+              if (state.settings.provider === "ollama" && buffer.trim()) {
+                runUiStep("parseOllamaChunk(final buffer)", () => {
+                  parseOllamaChunk(buffer, (delta) => {
+                    sawStructuredChunk = true;
+                    assistantMessage.content += delta;
+                    renderMessages();
+                  }, () => {
+                    sawStructuredChunk = true;
+                    doneStreaming = true;
+                  });
+                });
+              } else if (state.settings.provider === "anthropic" && buffer.trim()) {
+                runUiStep("parseAnthropicChunk(final buffer)", () => {
+                  parseAnthropicChunk(buffer, (delta) => {
+                    sawStructuredChunk = true;
+                    assistantMessage.content += delta;
+                    renderMessages();
+                  }, () => {
+                    sawStructuredChunk = true;
+                    doneStreaming = true;
+                  });
+                });
+              }
+
+              if (!sawStructuredChunk && !assistantMessage.content.trim()) {
+                if (state.settings.provider === "ollama") {
+                  assistantMessage.content = await retryOllamaAsNonStream(endpoint, headers);
+                  renderMessages();
+                } else {
+                  throw new Error("The provider returned a response body that could not be parsed.");
+                }
+              }
+            } else {
+              const rawText = await runAsyncStep("response.text", async () => {
+                return await response.text();
+              });
+              addDebugEntry("Chat Raw Response", rawText);
+              const data = runUiStep("parseApiTextResponse", () => {
+                return parseApiTextResponse(rawText, state.settings.provider);
+              });
+              runUiStep("validateProviderResponse", () => {
+                validateProviderResponse(data, state.settings.provider);
+              });
+              addDebugEntry("Chat Response", {
+                status: response.status,
+                statusText: response.statusText,
+                body: data,
+              });
+              assistantMessage.content = extractAssistantContent(data, state.settings.provider);
+              if (!assistantMessage.content.trim()) {
+                if (state.settings.provider === "ollama" && state.settings.streaming) {
+                  assistantMessage.content = await retryOllamaAsNonStream(endpoint, headers);
+                } else {
+                  throw new Error("The provider returned an empty assistant response.");
+                }
+              }
+              state.messages.push(assistantMessage);
+            }
+          } catch (error) {
+            if (error && error.name !== "AbortError") {
+              addDebugEntry("Chat Failure", formatErrorDetails(error));
+              setError(error.message || "Something went wrong.");
+            }
+          } finally {
+            state.isLoading = false;
+            state.controller = null;
+            render();
+          }
+        }
+
+        function handleComposerInput(event) {
+          const value = event.target.value;
+          setComposerValue(value, event.target);
+          if (state.error) setError(null);
+        }
+
+        function handleComposerKeyDown(event) {
+          if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            sendMessage();
+          }
+        }
+
+        function handleVisibleModelChange(event) {
+          const nextModel = event.target.value;
+          state.settings.model = nextModel;
+          syncActiveProfile(state.providerProfiles, state.settings);
+          if (state.draftSettings && state.draftSettings.provider === state.settings.provider) {
+            state.draftSettings.model = nextModel;
+            if (state.draftProviderProfiles) {
+              syncActiveProfile(state.draftProviderProfiles, state.draftSettings);
+            }
+            populateSettingsModelSelect(nextModel);
+          }
+          render();
+        }
+
+        refs.settingsButton.addEventListener("click", openSettings);
+        refs.closeSettingsButton.addEventListener("click", closeSettings);
+        refs.cancelSettingsButton.addEventListener("click", closeSettings);
+        refs.saveSettingsButton.addEventListener("click", () => {
+          if (!state.draftSettings.model.trim()) {
+            state.modelsStatus = { tone: "error", text: "Select a model before saving." };
+            updateStatusUi();
+            refs.modelSelect.focus();
+            return;
+          }
+          syncActiveProfile(state.draftProviderProfiles, state.draftSettings);
+          state.providerProfiles = cloneProviderProfiles(state.draftProviderProfiles);
+          state.settings = { ...state.draftSettings };
+          closeSettings();
+          render();
+        });
+
+        refs.providerInput.addEventListener("change", (event) => {
+          const nextProvider = event.target.value;
+          syncActiveProfile(state.draftProviderProfiles, state.draftSettings);
+          state.availableModels = [];
+          clearStatuses();
+          applyDraftProvider(nextProvider);
+          refreshProviderConnection({ silent: true, focusSelect: false });
+        });
+
+        refs.streamingToggle.addEventListener("click", () => {
+          const next = !state.draftSettings.streaming;
+          state.draftSettings.streaming = next;
+          refs.streamingToggle.classList.toggle("is-on", next);
+          refs.streamingToggle.setAttribute("aria-pressed", String(next));
+        });
+
+        refs.debugToggle.addEventListener("click", () => {
+          const next = !state.draftSettings.debugPanel;
+          state.draftSettings.debugPanel = next;
+          refs.debugToggle.classList.toggle("is-on", next);
+          refs.debugToggle.setAttribute("aria-pressed", String(next));
+        });
+
+        refs.apiBaseUrlInput.addEventListener("input", (event) => {
+          state.draftSettings.apiBaseUrl = event.target.value;
+          syncActiveProfile(state.draftProviderProfiles, state.draftSettings);
+          state.availableModels = [];
+          populateSettingsModelSelect("");
+          clearStatuses();
+        });
+        refs.apiKeyInput.addEventListener("input", (event) => {
+          state.draftSettings.apiKey = event.target.value;
+          syncActiveProfile(state.draftProviderProfiles, state.draftSettings);
+          state.availableModels = [];
+          populateSettingsModelSelect("");
+          clearStatuses();
+        });
+        refs.modelSelect.addEventListener("change", (event) => {
+          state.draftSettings.model = event.target.value;
+          syncActiveProfile(state.draftProviderProfiles, state.draftSettings);
+        });
+        refs.systemPromptInput.addEventListener("input", (event) => {
+          state.draftSettings.systemPrompt = event.target.value;
+        });
+        refs.maxTokensInput.addEventListener("input", (event) => {
+          state.draftSettings.maxTokens = event.target.value;
+          syncActiveProfile(state.draftProviderProfiles, state.draftSettings);
+        });
+        refs.temperatureInput.addEventListener("input", (event) => {
+          state.draftSettings.temperature = event.target.value;
+          syncActiveProfile(state.draftProviderProfiles, state.draftSettings);
+        });
+        refs.topPInput.addEventListener("input", (event) => {
+          state.draftSettings.topP = event.target.value;
+          syncActiveProfile(state.draftProviderProfiles, state.draftSettings);
+        });
+        refs.topKInput.addEventListener("input", (event) => {
+          state.draftSettings.topK = event.target.value;
+          syncActiveProfile(state.draftProviderProfiles, state.draftSettings);
+        });
+        refs.presencePenaltyInput.addEventListener("input", (event) => {
+          state.draftSettings.presencePenalty = event.target.value;
+          syncActiveProfile(state.draftProviderProfiles, state.draftSettings);
+        });
+        refs.frequencyPenaltyInput.addEventListener("input", (event) => {
+          state.draftSettings.frequencyPenalty = event.target.value;
+          syncActiveProfile(state.draftProviderProfiles, state.draftSettings);
+        });
+        refs.stopSequencesInput.addEventListener("input", (event) => {
+          state.draftSettings.stopSequences = event.target.value;
+          syncActiveProfile(state.draftProviderProfiles, state.draftSettings);
+        });
+
+        refs.testProviderButton.addEventListener("click", () => {
+          refreshProviderConnection({ silent: false, focusSelect: false });
+        });
+
+        refs.reloadModelsButton.addEventListener("click", () => {
+          refreshProviderConnection({ silent: false, focusSelect: true });
+        });
+        refs.topModelSelect.addEventListener("change", handleVisibleModelChange);
+        refs.emptyModelSelect.addEventListener("change", handleVisibleModelChange);
+
+        refs.sendButton.addEventListener("click", sendMessage);
+        refs.sendButtonEmpty.addEventListener("click", sendMessage);
+        refs.stopButton.addEventListener("click", () => {
+          if (state.controller) state.controller.abort();
+          state.isLoading = false;
+          render();
+        });
+        refs.stopButtonEmpty.addEventListener("click", () => {
+          if (state.controller) state.controller.abort();
+          state.isLoading = false;
+          render();
+        });
+        refs.newChatButton.addEventListener("click", resetConversation);
+        refs.dismissErrorButton.addEventListener("click", () => setError(null));
+        refs.clearDebugButton.addEventListener("click", () => {
+          state.debugEntries = [];
+          renderDebugPanel();
+        });
+        refs.closeDebugButton.addEventListener("click", () => {
+          state.settings.debugPanel = false;
+          if (state.draftSettings) {
+            state.draftSettings.debugPanel = false;
+            refs.debugToggle.classList.remove("is-on");
+            refs.debugToggle.setAttribute("aria-pressed", "false");
+          }
+          render();
+        });
+        refs.closeFatalErrorButton.addEventListener("click", closeFatalError);
+        refs.dismissFatalErrorButton.addEventListener("click", closeFatalError);
+        refs.settingsModal.addEventListener("click", (event) => {
+          if (event.target === refs.settingsModal) closeSettings();
+        });
+        refs.fatalErrorModal.addEventListener("click", (event) => {
+          if (event.target === refs.fatalErrorModal) closeFatalError();
+        });
+
+        [refs.composer, refs.composerEmpty].forEach((textarea) => {
+          textarea.addEventListener("input", handleComposerInput);
+          textarea.addEventListener("keydown", handleComposerKeyDown);
+        });
+
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "Escape" && refs.settingsModal.classList.contains("is-open")) {
+            closeSettings();
+          }
+          if (event.key === "Escape" && refs.fatalErrorModal.classList.contains("is-open")) {
+            closeFatalError();
+          }
+        });
+
+        window.addEventListener("error", (event) => {
+          addDebugEntry("Runtime Error", {
+            message: event.message,
+            source: event.filename,
+            line: event.lineno,
+            column: event.colno,
+            error: formatErrorDetails(event.error),
+          });
+        });
+
+        window.addEventListener("unhandledrejection", (event) => {
+          addDebugEntry("Unhandled Rejection", formatErrorDetails(event.reason));
+        });
+
+        renderSuggestions();
+        syncProviderUi(state.settings);
+        setComposerValue("", refs.composerEmpty);
+        render();
+        refreshProviderConnection({ silent: true, focusSelect: false });
+      })();
+    </script>
+  </body>
+</html>
