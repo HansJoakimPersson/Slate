@@ -4,7 +4,6 @@ A minimal, self-contained chat UI for OpenAI-compatible APIs and Ollama backends
 
 <div align="center">
 
-[![E2E](https://github.com/HansJoakimPersson/Slate/actions/workflows/e2e.yml/badge.svg)](https://github.com/HansJoakimPersson/Slate/actions/workflows/e2e.yml)
 [![license](https://img.shields.io/badge/license-AGPL--3.0--only-blue.svg?style=flat)](LICENSE.md)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-Support-FFDD00.svg?style=flat&logo=buymeacoffee&logoColor=000000)](https://buymeacoffee.com/hansjoakimpersson)
 
@@ -34,29 +33,6 @@ python3 -m http.server 4179
 ```
 
 Then open `http://127.0.0.1:4179` and configure your API endpoint and key in the settings panel.
-
-## Development
-
-Run the mock E2E regression suite:
-
-```bash
-npm install
-npm run test:e2e
-```
-
-Run live backend smoke tests against Ollama on `127.0.0.1:12434`:
-
-```bash
-npm run test:e2e:live
-```
-
-## What the tests verify
-
-- Model loading on startup
-- Provider-specific settings behavior (Ollama vs OpenAI-compatible)
-- Request construction for both provider modes
-- Transcript rendering for mocked assistant replies
-- Live backend smoke tests in both streaming and non-streaming modes
 
 ## Support
 
