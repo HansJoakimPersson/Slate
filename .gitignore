@@ -1,7 +1,11 @@
 # Dependencies
 node_modules/
 
-# Test output
+# Tests and test infrastructure (run locally)
+tests/
+playwright.config.js
+package.json
+package-lock.json
 playwright-report/
 test-results/
 
