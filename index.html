@@ -975,6 +975,12 @@
         resize: none;
       }
 
+      .settings-textarea--mono {
+        font-family: "JetBrains Mono", "Fira Code", monospace;
+        font-size: 11px;
+        min-height: 64px;
+      }
+
       .settings-help {
         margin: 6px 0 0;
         font-size: 11px;
@@ -998,6 +1004,56 @@
 
       .settings-grid--two {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .settings-group {
+        display: grid;
+        gap: 14px;
+      }
+
+      .settings-section {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+
+      .settings-section__summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 14px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        user-select: none;
+        list-style: none;
+      }
+
+      .settings-section__summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .settings-section__summary::after {
+        content: "";
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23737373' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-size: contain;
+        transition: transform 150ms;
+        flex-shrink: 0;
+      }
+
+      details[open] > .settings-section__summary::after {
+        transform: rotate(180deg);
+      }
+
+      .settings-section__body {
+        display: grid;
+        gap: 14px;
+        padding: 4px 14px 14px;
+        border-top: 1px solid var(--border);
       }
 
       .settings-action {
@@ -1112,17 +1168,131 @@
         word-break: break-word;
       }
 
-      #debugPanel {
-        display: none !important;
+      #sidebar {
+        display: none;
+        flex-direction: column;
+        width: 320px;
+        border-left: 1px solid var(--border);
+        background: var(--background);
         min-height: 0;
+        position: relative;
+        flex-shrink: 0;
       }
 
-      #debugPanel.is-open {
-        display: flex !important;
+      #sidebar.is-open {
+        display: flex;
+      }
+
+      .sidebar__resize-handle {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 5px;
+        cursor: col-resize;
+        z-index: 10;
+      }
+
+      .sidebar__resize-handle:hover,
+      .sidebar__resize-handle.is-resizing {
+        background: var(--primary);
+        opacity: 0.2;
+      }
+
+      .sidebar__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 8px 0 4px;
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+      }
+
+      .sidebar__tabs {
+        display: flex;
+      }
+
+      .sidebar__tab {
+        padding: 10px 12px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--muted);
+        border-bottom: 2px solid transparent;
+        transition: color 150ms, border-color 150ms;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .sidebar__tab.is-active {
+        color: var(--foreground);
+        border-bottom-color: var(--primary);
+      }
+
+      .sidebar__tab:hover {
+        color: var(--foreground);
+      }
+
+      .sidebar__debug-badge {
+        font-size: 10px;
+        background: var(--secondary);
+        color: var(--muted);
+        padding: 1px 5px;
+        border-radius: 10px;
+        font-weight: 500;
+        line-height: 1.4;
+      }
+
+      .sidebar__close {
+        width: 28px;
+        height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        color: var(--muted);
+        flex-shrink: 0;
+      }
+
+      .sidebar__close:hover {
+        background: var(--secondary);
+        color: var(--foreground);
+      }
+
+      .sidebar__panel {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .sidebar__panel.hidden {
+        display: none;
+      }
+
+      .settings-panel-body {
+        padding: 16px;
+        display: grid;
+        gap: 18px;
+      }
+
+      .sidebar__debug-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding: 6px 10px;
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
       }
 
       #debugLog {
+        flex: 1;
         min-height: 0;
+        overflow-y: auto;
+        padding: 8px 12px;
+        font-family: "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+        font-size: 11px;
       }
 
       .debug-entry {
@@ -1281,6 +1451,21 @@
                 <path d="M5 12h14"></path>
               </svg>
             </button>
+            <button id="debugButton" class="icon-button" type="button" aria-label="Debug">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="m8 2 1.88 1.88"></path>
+                <path d="M14.12 3.88 16 2"></path>
+                <path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"></path>
+                <path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"></path>
+                <path d="M12 20v-9"></path>
+                <path d="M6.53 9C4.6 8.8 3 7.1 3 5"></path>
+                <path d="M6 13H2"></path>
+                <path d="M3 21c0-2.1 1.7-3.9 3.8-4"></path>
+                <path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"></path>
+                <path d="M22 13h-4"></path>
+                <path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"></path>
+              </svg>
+            </button>
             <button id="settingsButton" class="icon-button" type="button" aria-label="Settings">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <circle cx="12" cy="12" r="3"></circle>
@@ -1389,19 +1574,50 @@
         </section>
       </section>
 
-      <div id="settingsModal" class="modal" aria-hidden="true">
-        <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+
+      <div id="fatalErrorModal" class="modal" aria-hidden="true">
+        <div class="modal__card" role="alertdialog" aria-modal="true" aria-labelledby="fatalErrorTitle">
           <div class="modal__header">
-            <h2 id="settingsTitle" class="modal__title">Settings</h2>
-            <button id="closeSettingsButton" class="modal__close" type="button" aria-label="Close settings">
+            <h2 id="fatalErrorTitle" class="modal__title">Backend error</h2>
+            <button id="closeFatalErrorButton" class="modal__close" type="button" aria-label="Close error dialog">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M18 6 6 18"></path>
                 <path d="m6 6 12 12"></path>
               </svg>
             </button>
           </div>
-
           <div class="modal__body">
+            <p class="modal__copy">
+              The provider returned a severe server error. The full backend message is shown below.
+            </p>
+            <pre id="fatalErrorText" class="modal__error-body"></pre>
+          </div>
+          <div class="modal__footer">
+            <button id="dismissFatalErrorButton" class="primary-button" type="button">Close</button>
+          </div>
+        </div>
+      </div>
+      </div>
+
+      <aside id="sidebar" aria-label="Sidebar" aria-hidden="true">
+        <div id="sidebarResizeHandle" class="sidebar__resize-handle"></div>
+        <div class="sidebar__header">
+          <div class="sidebar__tabs" role="tablist">
+            <button id="settingsTabBtn" class="sidebar__tab is-active" role="tab" aria-selected="true" type="button">Settings</button>
+            <button id="debugTabBtn" class="sidebar__tab" role="tab" aria-selected="false" type="button">
+              Debug <span id="debugCount" class="sidebar__debug-badge">0</span>
+            </button>
+          </div>
+          <button id="closeSidebarButton" class="sidebar__close" type="button" aria-label="Close sidebar">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M18 6 6 18"></path>
+              <path d="m6 6 12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div id="settingsPanel" class="sidebar__panel" role="tabpanel">
+          <div class="settings-panel-body">
             <label class="settings-field">
               <span class="settings-label">Provider</span>
               <select id="providerInput" class="settings-select">
@@ -1414,7 +1630,7 @@
             <label class="settings-field">
               <span class="settings-label">API base URL</span>
               <div class="settings-inline">
-              <input id="apiBaseUrlInput" class="settings-input" type="url" spellcheck="false" placeholder="http://127.0.0.1:12434/" />
+                <input id="apiBaseUrlInput" class="settings-input" type="url" spellcheck="false" placeholder="http://127.0.0.1:12434/" />
                 <button id="testProviderButton" class="settings-action" type="button">Check</button>
               </div>
               <p id="providerStatus" class="settings-status"></p>
@@ -1480,6 +1696,113 @@
               <p class="settings-help">Leave empty to use the provider default behavior.</p>
             </label>
 
+            <details id="advancedParamsDetails" class="settings-section">
+              <summary class="settings-section__summary">Advanced parameters</summary>
+              <div class="settings-section__body">
+
+                <label id="seedField" class="settings-field hidden">
+                  <span class="settings-label">Seed</span>
+                  <input id="seedInput" class="settings-input" type="number" min="0" step="1" inputmode="numeric" placeholder="Random" />
+                </label>
+
+                <div id="ollamaParamsSection" class="settings-group hidden">
+                  <div class="settings-grid settings-grid--two">
+                    <label class="settings-field">
+                      <span class="settings-label">Min P</span>
+                      <input id="minPInput" class="settings-input" type="number" min="0" max="1" step="0.05" inputmode="decimal" placeholder="Use provider default" />
+                    </label>
+                    <label class="settings-field">
+                      <span class="settings-label">Repeat penalty</span>
+                      <input id="repeatPenaltyInput" class="settings-input" type="number" min="0" step="0.05" inputmode="decimal" placeholder="Use provider default" />
+                    </label>
+                    <label class="settings-field">
+                      <span class="settings-label">Repeat last N</span>
+                      <input id="repeatLastNInput" class="settings-input" type="number" step="1" inputmode="numeric" placeholder="Use provider default" />
+                    </label>
+                    <label class="settings-field">
+                      <span class="settings-label">TFS Z</span>
+                      <input id="tfszInput" class="settings-input" type="number" min="0" step="0.1" inputmode="decimal" placeholder="Use provider default" />
+                    </label>
+                    <label class="settings-field">
+                      <span class="settings-label">Mirostat</span>
+                      <select id="mirostatInput" class="settings-select">
+                        <option value="">Use provider default</option>
+                        <option value="0">0 — Disabled</option>
+                        <option value="1">1 — Mirostat</option>
+                        <option value="2">2 — Mirostat 2.0</option>
+                      </select>
+                    </label>
+                    <label class="settings-field">
+                      <span class="settings-label">Mirostat Eta</span>
+                      <input id="mirostatEtaInput" class="settings-input" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Use provider default" />
+                    </label>
+                    <label class="settings-field">
+                      <span class="settings-label">Mirostat Tau</span>
+                      <input id="mirostatTauInput" class="settings-input" type="number" min="0" step="0.1" inputmode="decimal" placeholder="Use provider default" />
+                    </label>
+                    <label class="settings-field">
+                      <span class="settings-label">Num keep</span>
+                      <input id="numKeepInput" class="settings-input" type="number" step="1" inputmode="numeric" placeholder="Use provider default" />
+                    </label>
+                    <label class="settings-field">
+                      <span class="settings-label">Context size</span>
+                      <input id="numCtxInput" class="settings-input" type="number" min="1" step="1" inputmode="numeric" placeholder="Use provider default" />
+                    </label>
+                    <label class="settings-field">
+                      <span class="settings-label">Batch size</span>
+                      <input id="numBatchInput" class="settings-input" type="number" min="1" step="1" inputmode="numeric" placeholder="Use provider default" />
+                    </label>
+                    <label class="settings-field">
+                      <span class="settings-label">Num threads</span>
+                      <input id="numThreadInput" class="settings-input" type="number" min="1" step="1" inputmode="numeric" placeholder="Use provider default" />
+                    </label>
+                    <label class="settings-field">
+                      <span class="settings-label">Num GPU layers</span>
+                      <input id="numGpuInput" class="settings-input" type="number" min="0" step="1" inputmode="numeric" placeholder="Use provider default" />
+                    </label>
+                  </div>
+
+                  <label class="settings-field">
+                    <span class="settings-label">Format</span>
+                    <select id="formatInput" class="settings-select">
+                      <option value="">Use provider default</option>
+                      <option value="json">JSON</option>
+                    </select>
+                  </label>
+
+                  <label class="settings-field">
+                    <span class="settings-label">Keep alive</span>
+                    <input id="keepAliveInput" class="settings-input" type="text" spellcheck="false" placeholder="Use provider default (e.g. 5m, -1)" />
+                  </label>
+
+                  <div class="toggle-row">
+                    <div class="toggle-copy">
+                      <strong>Think</strong>
+                      <span>Extended reasoning before responding</span>
+                    </div>
+                    <button id="thinkToggle" class="toggle-button" type="button" aria-pressed="false"></button>
+                  </div>
+
+                  <div class="toggle-row">
+                    <div class="toggle-copy">
+                      <strong>Use mmap</strong>
+                      <span>Memory-map model files</span>
+                    </div>
+                    <button id="useMmapToggle" class="toggle-button is-on" type="button" aria-pressed="true"></button>
+                  </div>
+
+                  <div class="toggle-row">
+                    <div class="toggle-copy">
+                      <strong>Use mlock</strong>
+                      <span>Lock model in memory</span>
+                    </div>
+                    <button id="useMlockToggle" class="toggle-button" type="button" aria-pressed="false"></button>
+                  </div>
+                </div>
+
+              </div>
+            </details>
+
             <div class="toggle-row">
               <div class="toggle-copy">
                 <strong>Streaming</strong>
@@ -1488,68 +1811,64 @@
               <button id="streamingToggle" class="toggle-button is-on" type="button" aria-pressed="true"></button>
             </div>
 
+            <label class="settings-field">
+              <span class="settings-label">Stream delta chunk size</span>
+              <input id="streamChunkSizeInput" class="settings-input" type="number" min="1" step="1" inputmode="numeric" placeholder="Immediate (no buffering)" />
+              <p class="settings-help">Characters to accumulate before updating the display.</p>
+            </label>
+
             <div class="toggle-row">
               <div class="toggle-copy">
-                <strong>Debug sidebar</strong>
-                <span>Show request, response, and runtime logs</span>
+                <strong>Show reasoning tags</strong>
+                <span>Display &lt;think&gt; blocks in output</span>
               </div>
-              <button id="debugToggle" class="toggle-button" type="button" aria-pressed="false"></button>
+              <button id="showReasoningTagsToggle" class="toggle-button is-on" type="button" aria-pressed="true"></button>
             </div>
-          </div>
 
-          <div class="modal__footer">
-            <button id="cancelSettingsButton" class="modal__secondary" type="button">Cancel</button>
-            <button id="saveSettingsButton" class="primary-button" type="button">Save</button>
+            <label id="reasoningEffortField" class="settings-field hidden">
+              <span class="settings-label">Reasoning effort</span>
+              <select id="reasoningEffortInput" class="settings-select">
+                <option value="">Use provider default</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </label>
+
+            <label id="logitBiasField" class="settings-field hidden">
+              <span class="settings-label">Logit bias</span>
+              <textarea id="logitBiasInput" class="settings-textarea settings-textarea--mono" placeholder='{"1234": 1.5, "5678": -1}'></textarea>
+              <p class="settings-help">JSON object mapping token IDs to bias values (−100 to 100).</p>
+            </label>
+
+            <label id="toolsJsonField" class="settings-field hidden">
+              <span class="settings-label">Tools (function calling)</span>
+              <textarea id="toolsJsonInput" class="settings-textarea settings-textarea--mono" placeholder='[{"name": "my_tool", "description": "...", "parameters": {...}}]'></textarea>
+              <p class="settings-help">JSON array of tool definitions sent in the request.</p>
+            </label>
+
+            <label id="toolChoiceField" class="settings-field hidden">
+              <span class="settings-label">Tool choice</span>
+              <select id="toolChoiceInput" class="settings-select">
+                <option value="">Use provider default</option>
+                <option value="auto">Auto</option>
+                <option value="none">None</option>
+                <option value="required">Required</option>
+              </select>
+            </label>
+
+            <label class="settings-field">
+              <span class="settings-label">Custom parameters</span>
+              <textarea id="customParamsInput" class="settings-textarea settings-textarea--mono" placeholder='{"key": "value"}'></textarea>
+              <p class="settings-help">JSON object merged into the top-level request body.</p>
+            </label>
           </div>
         </div>
-      </div>
 
-      <div id="fatalErrorModal" class="modal" aria-hidden="true">
-        <div class="modal__card" role="alertdialog" aria-modal="true" aria-labelledby="fatalErrorTitle">
-          <div class="modal__header">
-            <h2 id="fatalErrorTitle" class="modal__title">Backend error</h2>
-            <button id="closeFatalErrorButton" class="modal__close" type="button" aria-label="Close error dialog">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M18 6 6 18"></path>
-                <path d="m6 6 12 12"></path>
-              </svg>
-            </button>
-          </div>
-          <div class="modal__body">
-            <p class="modal__copy">
-              The provider returned a severe server error. The full backend message is shown below.
-            </p>
-            <pre id="fatalErrorText" class="modal__error-body"></pre>
-          </div>
-          <div class="modal__footer">
-            <button id="dismissFatalErrorButton" class="primary-button" type="button">Close</button>
-          </div>
-        </div>
-      </div>
-      </div>
-
-      <aside id="debugPanel" class="hidden lg:flex flex-col w-80 border-l bg-background" aria-label="Debug panel">
-        <div class="flex items-center justify-between px-4 py-2.5 border-b">
-          <div class="flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bug w-4 h-4 text-muted-foreground" aria-hidden="true">
-              <path d="m8 2 1.88 1.88"></path>
-              <path d="M14.12 3.88 16 2"></path>
-              <path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"></path>
-              <path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"></path>
-              <path d="M12 20v-9"></path>
-              <path d="M6.53 9C4.6 8.8 3 7.1 3 5"></path>
-              <path d="M6 13H2"></path>
-              <path d="M3 21c0-2.1 1.7-3.9 3.8-4"></path>
-              <path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"></path>
-              <path d="M22 13h-4"></path>
-              <path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"></path>
-            </svg>
-            <span class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Debug</span>
-            <span id="debugCount" class="text-[10px] text-muted-foreground/60 bg-secondary px-1.5 py-0.5 rounded-full">0</span>
-          </div>
-          <div class="flex items-center gap-0.5">
-            <button id="clearDebugButton" class="inline-flex items-center justify-center w-7 h-7 rounded-lg text-muted-foreground hover:text-foreground transition-colors duration-150" type="button" aria-label="Clear debug log">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash2 w-3.5 h-3.5" aria-hidden="true">
+        <div id="debugPanel" class="sidebar__panel hidden" role="tabpanel">
+          <div class="sidebar__debug-toolbar">
+            <button id="clearDebugButton" class="icon-button" type="button" aria-label="Clear debug log">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M3 6h18"></path>
                 <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
                 <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
@@ -1557,15 +1876,9 @@
                 <line x1="14" x2="14" y1="11" y2="17"></line>
               </svg>
             </button>
-            <button id="closeDebugButton" class="inline-flex items-center justify-center w-7 h-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors duration-150" type="button" aria-label="Close debug panel">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x w-3.5 h-3.5" aria-hidden="true">
-                <path d="M18 6 6 18"></path>
-                <path d="m6 6 12 12"></path>
-              </svg>
-            </button>
           </div>
+          <div id="debugLog"></div>
         </div>
-        <div id="debugLog" class="flex-1 overflow-y-auto px-3 py-2 space-y-1 font-mono text-[11px]"></div>
       </aside>
     </div>
 
@@ -1580,7 +1893,6 @@
           ],
           defaultProvider: "openai",
           defaultStreaming: true,
-          defaultDebugPanel: true,
           dmrOpenAiSystemPrompt: "You are a helpful assistant. Answer concisely and stop after your answer.",
           dmrOpenAiRequiredStops: ["\nUser:", "\nAssistant:", "User:", "Human:"],
           providers: {
@@ -1596,6 +1908,29 @@
               presencePenalty: "",
               frequencyPenalty: "",
               stopSequences: "",
+              seed: "",
+              minP: "",
+              repeatPenalty: "",
+              repeatLastN: "",
+              tfsZ: "",
+              mirostat: "",
+              mirostatEta: "",
+              mirostatTau: "",
+              numKeep: "",
+              numCtx: "",
+              numBatch: "",
+              numThread: "",
+              numGpu: "",
+              format: "",
+              keepAlive: "",
+              think: false,
+              useMmap: true,
+              useMlock: false,
+              reasoningEffort: "",
+              logitBias: "",
+              toolsJson: "",
+              toolChoice: "",
+              customParams: "",
             },
             openai: {
               label: "OpenAI-compatible",
@@ -1609,6 +1944,12 @@
               presencePenalty: "0",
               frequencyPenalty: "0",
               stopSequences: "",
+              seed: "",
+              reasoningEffort: "",
+              logitBias: "",
+              toolsJson: "",
+              toolChoice: "",
+              customParams: "",
             },
             anthropic: {
               label: "Anthropic-compatible",
@@ -1622,6 +1963,11 @@
               presencePenalty: "",
               frequencyPenalty: "",
               stopSequences: "",
+              reasoningEffort: "",
+              logitBias: "",
+              toolsJson: "",
+              toolChoice: "",
+              customParams: "",
             },
           },
         };
@@ -1653,8 +1999,32 @@
             presencePenalty: base.presencePenalty,
             frequencyPenalty: base.frequencyPenalty,
             stopSequences: base.stopSequences,
+            seed: base.seed || "",
+            minP: base.minP || "",
+            repeatPenalty: base.repeatPenalty || "",
+            repeatLastN: base.repeatLastN || "",
+            tfsZ: base.tfsZ || "",
+            mirostat: base.mirostat || "",
+            mirostatEta: base.mirostatEta || "",
+            mirostatTau: base.mirostatTau || "",
+            numKeep: base.numKeep || "",
+            numCtx: base.numCtx || "",
+            numBatch: base.numBatch || "",
+            numThread: base.numThread || "",
+            numGpu: base.numGpu || "",
+            format: base.format || "",
+            keepAlive: base.keepAlive || "",
+            think: base.think || false,
+            useMmap: base.useMmap !== undefined ? base.useMmap : true,
+            useMlock: base.useMlock || false,
             streaming: APP_DEFAULTS.defaultStreaming,
-            debugPanel: APP_DEFAULTS.defaultDebugPanel,
+            streamChunkSize: "",
+            showReasoningTags: true,
+            reasoningEffort: base.reasoningEffort || "",
+            logitBias: base.logitBias || "",
+            toolsJson: base.toolsJson || "",
+            toolChoice: base.toolChoice || "",
+            customParams: base.customParams || "",
           };
         }
 
@@ -1669,8 +2039,6 @@
           debugEntries: [],
           providerProfiles: createProviderProfiles(),
           settings: createInitialSettings(),
-          draftSettings: null,
-          draftProviderProfiles: null,
           controller: null,
         };
 
@@ -1694,10 +2062,13 @@
           errorText: document.getElementById("errorText"),
           dismissErrorButton: document.getElementById("dismissErrorButton"),
           suggestionList: document.getElementById("suggestionList"),
-          settingsModal: document.getElementById("settingsModal"),
-          closeSettingsButton: document.getElementById("closeSettingsButton"),
-          cancelSettingsButton: document.getElementById("cancelSettingsButton"),
-          saveSettingsButton: document.getElementById("saveSettingsButton"),
+          sidebar: document.getElementById("sidebar"),
+          settingsPanel: document.getElementById("settingsPanel"),
+          settingsTabBtn: document.getElementById("settingsTabBtn"),
+          debugTabBtn: document.getElementById("debugTabBtn"),
+          closeSidebarButton: document.getElementById("closeSidebarButton"),
+          sidebarResizeHandle: document.getElementById("sidebarResizeHandle"),
+          debugButton: document.getElementById("debugButton"),
           fatalErrorModal: document.getElementById("fatalErrorModal"),
           closeFatalErrorButton: document.getElementById("closeFatalErrorButton"),
           dismissFatalErrorButton: document.getElementById("dismissFatalErrorButton"),
@@ -1706,7 +2077,6 @@
           debugLog: document.getElementById("debugLog"),
           debugCount: document.getElementById("debugCount"),
           clearDebugButton: document.getElementById("clearDebugButton"),
-          closeDebugButton: document.getElementById("closeDebugButton"),
           providerInput: document.getElementById("providerInput"),
           apiBaseUrlInput: document.getElementById("apiBaseUrlInput"),
           testProviderButton: document.getElementById("testProviderButton"),
@@ -1728,8 +2098,38 @@
           frequencyPenaltyInput: document.getElementById("frequencyPenaltyInput"),
           stopSequencesField: document.getElementById("stopSequencesField"),
           stopSequencesInput: document.getElementById("stopSequencesInput"),
+          seedField: document.getElementById("seedField"),
+          seedInput: document.getElementById("seedInput"),
+          ollamaParamsSection: document.getElementById("ollamaParamsSection"),
+          minPInput: document.getElementById("minPInput"),
+          repeatPenaltyInput: document.getElementById("repeatPenaltyInput"),
+          repeatLastNInput: document.getElementById("repeatLastNInput"),
+          tfszInput: document.getElementById("tfszInput"),
+          mirostatInput: document.getElementById("mirostatInput"),
+          mirostatEtaInput: document.getElementById("mirostatEtaInput"),
+          mirostatTauInput: document.getElementById("mirostatTauInput"),
+          numKeepInput: document.getElementById("numKeepInput"),
+          numCtxInput: document.getElementById("numCtxInput"),
+          numBatchInput: document.getElementById("numBatchInput"),
+          numThreadInput: document.getElementById("numThreadInput"),
+          numGpuInput: document.getElementById("numGpuInput"),
+          formatInput: document.getElementById("formatInput"),
+          keepAliveInput: document.getElementById("keepAliveInput"),
+          thinkToggle: document.getElementById("thinkToggle"),
+          useMmapToggle: document.getElementById("useMmapToggle"),
+          useMlockToggle: document.getElementById("useMlockToggle"),
           streamingToggle: document.getElementById("streamingToggle"),
-          debugToggle: document.getElementById("debugToggle"),
+          streamChunkSizeInput: document.getElementById("streamChunkSizeInput"),
+          showReasoningTagsToggle: document.getElementById("showReasoningTagsToggle"),
+          reasoningEffortField: document.getElementById("reasoningEffortField"),
+          reasoningEffortInput: document.getElementById("reasoningEffortInput"),
+          logitBiasField: document.getElementById("logitBiasField"),
+          logitBiasInput: document.getElementById("logitBiasInput"),
+          toolsJsonField: document.getElementById("toolsJsonField"),
+          toolsJsonInput: document.getElementById("toolsJsonInput"),
+          toolChoiceField: document.getElementById("toolChoiceField"),
+          toolChoiceInput: document.getElementById("toolChoiceInput"),
+          customParamsInput: document.getElementById("customParamsInput"),
         };
 
         const providerConfig = {
@@ -1798,11 +2198,8 @@
         }
 
         function renderDebugPanel() {
-          refs.debugPanel.classList.toggle("is-open", Boolean(state.settings.debugPanel));
           refs.debugCount.textContent = String(state.debugEntries.length);
           refs.debugLog.innerHTML = "";
-
-          if (!state.settings.debugPanel) return;
 
           if (!state.debugEntries.length) {
             const empty = document.createElement("p");
@@ -2020,6 +2417,52 @@
           if (state.error) addDebugEntry("UI Error", state.error);
         }
 
+        function syncToggle(btn, value) {
+          btn.classList.toggle("is-on", value);
+          btn.setAttribute("aria-pressed", String(value));
+        }
+
+        function populateSettingsInputs() {
+          const d = state.settings;
+          refs.providerInput.value = d.provider;
+          refs.apiBaseUrlInput.value = d.apiBaseUrl;
+          refs.apiKeyInput.value = d.apiKey;
+          refs.systemPromptInput.value = d.systemPrompt;
+          refs.maxTokensInput.value = d.maxTokens;
+          refs.temperatureInput.value = d.temperature;
+          refs.topPInput.value = d.topP;
+          refs.topKInput.value = d.topK;
+          refs.presencePenaltyInput.value = d.presencePenalty;
+          refs.frequencyPenaltyInput.value = d.frequencyPenalty;
+          refs.stopSequencesInput.value = d.stopSequences;
+          refs.seedInput.value = d.seed;
+          refs.minPInput.value = d.minP;
+          refs.repeatPenaltyInput.value = d.repeatPenalty;
+          refs.repeatLastNInput.value = d.repeatLastN;
+          refs.tfszInput.value = d.tfsZ;
+          refs.mirostatInput.value = d.mirostat;
+          refs.mirostatEtaInput.value = d.mirostatEta;
+          refs.mirostatTauInput.value = d.mirostatTau;
+          refs.numKeepInput.value = d.numKeep;
+          refs.numCtxInput.value = d.numCtx;
+          refs.numBatchInput.value = d.numBatch;
+          refs.numThreadInput.value = d.numThread;
+          refs.numGpuInput.value = d.numGpu;
+          refs.formatInput.value = d.format;
+          refs.keepAliveInput.value = d.keepAlive;
+          syncToggle(refs.thinkToggle, d.think);
+          syncToggle(refs.useMmapToggle, d.useMmap);
+          syncToggle(refs.useMlockToggle, d.useMlock);
+          syncToggle(refs.streamingToggle, d.streaming);
+          refs.streamChunkSizeInput.value = d.streamChunkSize;
+          syncToggle(refs.showReasoningTagsToggle, d.showReasoningTags);
+          refs.reasoningEffortInput.value = d.reasoningEffort;
+          refs.logitBiasInput.value = d.logitBias;
+          refs.toolsJsonInput.value = d.toolsJson;
+          refs.toolChoiceInput.value = d.toolChoice;
+          refs.customParamsInput.value = d.customParams;
+        }
+
         function syncProviderUi(settings) {
           const provider = settings.provider;
           const supportsApiKey = provider === "openai" || provider === "anthropic";
@@ -2028,6 +2471,12 @@
           refs.presencePenaltyField.classList.toggle("hidden", provider !== "openai");
           refs.frequencyPenaltyField.classList.toggle("hidden", provider !== "openai");
           refs.stopSequencesField.classList.toggle("hidden", provider === "ollama");
+          refs.seedField.classList.toggle("hidden", provider === "anthropic");
+          refs.ollamaParamsSection.classList.toggle("hidden", provider !== "ollama");
+          refs.reasoningEffortField.classList.toggle("hidden", provider !== "openai");
+          refs.logitBiasField.classList.toggle("hidden", provider !== "openai");
+          refs.toolsJsonField.classList.toggle("hidden", provider === "ollama");
+          refs.toolChoiceField.classList.toggle("hidden", provider === "ollama");
           refs.apiBaseUrlInput.placeholder = providerConfig[provider].baseUrl;
         }
 
@@ -2063,15 +2512,7 @@
         }
 
         function getSettingsForLookup() {
-          return state.draftSettings || state.settings;
-        }
-
-        function cloneProviderProfiles(source) {
-          return {
-            ollama: { ...source.ollama },
-            openai: { ...source.openai },
-            anthropic: { ...source.anthropic },
-          };
+          return state.settings;
         }
 
         function syncActiveProfile(targetProfiles, settings) {
@@ -2086,47 +2527,74 @@
             presencePenalty: settings.presencePenalty,
             frequencyPenalty: settings.frequencyPenalty,
             stopSequences: settings.stopSequences,
+            seed: settings.seed,
+            minP: settings.minP,
+            repeatPenalty: settings.repeatPenalty,
+            repeatLastN: settings.repeatLastN,
+            tfsZ: settings.tfsZ,
+            mirostat: settings.mirostat,
+            mirostatEta: settings.mirostatEta,
+            mirostatTau: settings.mirostatTau,
+            numKeep: settings.numKeep,
+            numCtx: settings.numCtx,
+            numBatch: settings.numBatch,
+            numThread: settings.numThread,
+            numGpu: settings.numGpu,
+            format: settings.format,
+            keepAlive: settings.keepAlive,
+            think: settings.think,
+            useMmap: settings.useMmap,
+            useMlock: settings.useMlock,
+            reasoningEffort: settings.reasoningEffort,
+            logitBias: settings.logitBias,
+            toolsJson: settings.toolsJson,
+            toolChoice: settings.toolChoice,
+            customParams: settings.customParams,
           };
         }
 
-        function applyDraftProvider(provider) {
-          const profile = state.draftProviderProfiles[provider] || {
-            apiBaseUrl: providerConfig[provider].baseUrl,
-            apiKey: "",
-            model: providerConfig[provider].model,
-            maxTokens: provider === "anthropic" ? "1024" : provider === "openai" ? "300" : "512",
-            temperature: provider === "openai" ? "0.4" : "0.7",
-            topP: provider === "openai" ? "1" : "0.9",
-            topK: provider === "openai" ? "" : "40",
-            presencePenalty: "",
-            frequencyPenalty: "",
-            stopSequences: "",
-          };
+        function applyProvider(provider) {
+          const defaults = APP_DEFAULTS.providers[provider];
+          const profile = state.providerProfiles[provider] || { ...defaults };
 
-          state.draftSettings.provider = provider;
-          state.draftSettings.apiBaseUrl = profile.apiBaseUrl;
-          state.draftSettings.apiKey = profile.apiKey;
-          state.draftSettings.model = profile.model;
-          state.draftSettings.maxTokens = profile.maxTokens || "";
-          state.draftSettings.temperature = profile.temperature || "";
-          state.draftSettings.topP = profile.topP || "";
-          state.draftSettings.topK = profile.topK || "";
-          state.draftSettings.presencePenalty = profile.presencePenalty || "";
-          state.draftSettings.frequencyPenalty = profile.frequencyPenalty || "";
-          state.draftSettings.stopSequences = profile.stopSequences || "";
+          state.settings.provider = provider;
+          state.settings.apiBaseUrl = profile.apiBaseUrl;
+          state.settings.apiKey = profile.apiKey;
+          state.settings.model = profile.model;
+          state.settings.maxTokens = profile.maxTokens || "";
+          state.settings.temperature = profile.temperature || "";
+          state.settings.topP = profile.topP || "";
+          state.settings.topK = profile.topK || "";
+          state.settings.presencePenalty = profile.presencePenalty || "";
+          state.settings.frequencyPenalty = profile.frequencyPenalty || "";
+          state.settings.stopSequences = profile.stopSequences || "";
+          state.settings.seed = profile.seed || "";
+          state.settings.minP = profile.minP || "";
+          state.settings.repeatPenalty = profile.repeatPenalty || "";
+          state.settings.repeatLastN = profile.repeatLastN || "";
+          state.settings.tfsZ = profile.tfsZ || "";
+          state.settings.mirostat = profile.mirostat || "";
+          state.settings.mirostatEta = profile.mirostatEta || "";
+          state.settings.mirostatTau = profile.mirostatTau || "";
+          state.settings.numKeep = profile.numKeep || "";
+          state.settings.numCtx = profile.numCtx || "";
+          state.settings.numBatch = profile.numBatch || "";
+          state.settings.numThread = profile.numThread || "";
+          state.settings.numGpu = profile.numGpu || "";
+          state.settings.format = profile.format || "";
+          state.settings.keepAlive = profile.keepAlive || "";
+          state.settings.think = profile.think || false;
+          state.settings.useMmap = profile.useMmap !== undefined ? profile.useMmap : true;
+          state.settings.useMlock = profile.useMlock || false;
+          state.settings.reasoningEffort = profile.reasoningEffort || "";
+          state.settings.logitBias = profile.logitBias || "";
+          state.settings.toolsJson = profile.toolsJson || "";
+          state.settings.toolChoice = profile.toolChoice || "";
+          state.settings.customParams = profile.customParams || "";
 
-          refs.providerInput.value = provider;
-          refs.apiBaseUrlInput.value = profile.apiBaseUrl;
-          refs.apiKeyInput.value = profile.apiKey;
-          refs.maxTokensInput.value = state.draftSettings.maxTokens;
-          refs.temperatureInput.value = state.draftSettings.temperature;
-          refs.topPInput.value = state.draftSettings.topP;
-          refs.topKInput.value = state.draftSettings.topK;
-          refs.presencePenaltyInput.value = state.draftSettings.presencePenalty;
-          refs.frequencyPenaltyInput.value = state.draftSettings.frequencyPenalty;
-          refs.stopSequencesInput.value = state.draftSettings.stopSequences;
-          populateSettingsModelSelect(profile.model);
-          syncProviderUi(state.draftSettings);
+          populateSettingsInputs();
+          populateSettingsModelSelect(state.settings.model);
+          syncProviderUi(state.settings);
         }
 
         function getLookupHeaders(settings) {
@@ -2165,7 +2633,6 @@
 
           const nextModel = state.availableModels.indexOf(current) >= 0 ? current : state.availableModels[0];
           refs.modelSelect.value = nextModel;
-          if (state.draftSettings) state.draftSettings.model = nextModel;
         }
 
         function populateVisibleModelSelect(select, selectedModel) {
@@ -2269,12 +2736,7 @@
               settings.model = models[0];
             }
             populateSettingsModelSelect(settings.model);
-            if (settings === state.settings) {
-              syncActiveProfile(state.providerProfiles, state.settings);
-            }
-            if (settings === state.draftSettings) {
-              syncActiveProfile(state.draftProviderProfiles, state.draftSettings);
-            }
+            syncActiveProfile(state.providerProfiles, state.settings);
             syncVisibleModelSelectors();
             state.providerStatus = { tone: "success", text: "Connection successful." };
             state.modelsStatus = { tone: "success", text: models.length + " model" + (models.length === 1 ? "" : "s") + " loaded." };
@@ -2294,38 +2756,28 @@
           }
         }
 
-        function openSettings() {
-          state.draftSettings = { ...state.settings };
-          state.draftProviderProfiles = cloneProviderProfiles(state.providerProfiles);
-          syncActiveProfile(state.draftProviderProfiles, state.draftSettings);
-          refs.providerInput.value = state.draftSettings.provider;
-          refs.apiBaseUrlInput.value = state.draftSettings.apiBaseUrl;
-          refs.apiKeyInput.value = state.draftSettings.apiKey;
-          refs.systemPromptInput.value = state.draftSettings.systemPrompt;
-          refs.maxTokensInput.value = state.draftSettings.maxTokens;
-          refs.temperatureInput.value = state.draftSettings.temperature;
-          refs.topPInput.value = state.draftSettings.topP;
-          refs.topKInput.value = state.draftSettings.topK;
-          refs.presencePenaltyInput.value = state.draftSettings.presencePenalty;
-          refs.frequencyPenaltyInput.value = state.draftSettings.frequencyPenalty;
-          refs.stopSequencesInput.value = state.draftSettings.stopSequences;
-          refs.streamingToggle.classList.toggle("is-on", state.draftSettings.streaming);
-          refs.streamingToggle.setAttribute("aria-pressed", String(state.draftSettings.streaming));
-          refs.debugToggle.classList.toggle("is-on", state.draftSettings.debugPanel);
-          refs.debugToggle.setAttribute("aria-pressed", String(state.draftSettings.debugPanel));
-          clearStatuses();
-          populateSettingsModelSelect(state.draftSettings.model);
-          syncProviderUi(state.draftSettings);
-          refs.settingsModal.classList.add("is-open");
-          refs.settingsModal.setAttribute("aria-hidden", "false");
-          refs.providerInput.focus();
-          refreshProviderConnection({ silent: true, focusSelect: false });
+        function openSidebar(tab) {
+          refs.sidebar.classList.add("is-open");
+          refs.sidebar.setAttribute("aria-hidden", "false");
+          switchTab(tab || "settings");
+          if (state.availableModels.length === 0) {
+            refreshProviderConnection({ silent: true, focusSelect: false });
+          }
         }
 
-        function closeSettings() {
-          refs.settingsModal.classList.remove("is-open");
-          refs.settingsModal.setAttribute("aria-hidden", "true");
-          refs.settingsButton.focus();
+        function closeSidebar() {
+          refs.sidebar.classList.remove("is-open");
+          refs.sidebar.setAttribute("aria-hidden", "true");
+        }
+
+        function switchTab(tab) {
+          const isSettings = tab === "settings";
+          refs.settingsPanel.classList.toggle("hidden", !isSettings);
+          refs.debugPanel.classList.toggle("hidden", isSettings);
+          refs.settingsTabBtn.classList.toggle("is-active", isSettings);
+          refs.debugTabBtn.classList.toggle("is-active", !isSettings);
+          refs.settingsTabBtn.setAttribute("aria-selected", String(isSettings));
+          refs.debugTabBtn.setAttribute("aria-selected", String(!isSettings));
         }
 
         function renderSuggestions() {
@@ -2379,8 +2831,11 @@
 
               const content = document.createElement("div");
               content.className = "message__content";
+              const displayContent = (message.role === "assistant" && !state.settings.showReasoningTags)
+                ? message.content.replace(/<think>[\s\S]*?<\/think>/gi, "").trim()
+                : message.content;
               content.innerHTML =
-                message.role === "assistant" ? renderMarkdownLite(message.content) : "<p>" + escapeHtml(message.content) + "</p>";
+                message.role === "assistant" ? renderMarkdownLite(displayContent) : "<p>" + escapeHtml(message.content) + "</p>";
 
               bubble.appendChild(content);
 
@@ -2551,51 +3006,87 @@
 
         function buildRequestBody(messages) {
           messages = messages || state.messages;
-          const provider = state.settings.provider;
-          const maxTokens = parseOptionalInt(state.settings.maxTokens);
-          const temperature = parseOptionalFloat(state.settings.temperature);
-          const topP = parseOptionalFloat(state.settings.topP);
-          const topK = parseOptionalInt(state.settings.topK);
-          const presencePenalty = parseOptionalFloat(state.settings.presencePenalty);
-          const frequencyPenalty = parseOptionalFloat(state.settings.frequencyPenalty);
-          const stopSequences = parseStopSequences(state.settings.stopSequences);
+          const s = state.settings;
+          const provider = s.provider;
+          const maxTokens = parseOptionalInt(s.maxTokens);
+          const temperature = parseOptionalFloat(s.temperature);
+          const topP = parseOptionalFloat(s.topP);
+          const topK = parseOptionalInt(s.topK);
+          const presencePenalty = parseOptionalFloat(s.presencePenalty);
+          const frequencyPenalty = parseOptionalFloat(s.frequencyPenalty);
+          const stopSequences = parseStopSequences(s.stopSequences);
+          const seed = parseOptionalInt(s.seed);
 
           if (provider === "anthropic") {
             const requestBody = {
-              model: state.settings.model,
+              model: s.model,
               messages: buildAnthropicMessages(messages),
               max_tokens: maxTokens || 1024,
-              stream: state.settings.streaming,
+              stream: s.streaming,
             };
 
-            if (state.settings.systemPrompt.trim()) requestBody.system = state.settings.systemPrompt.trim();
+            if (s.systemPrompt.trim()) requestBody.system = s.systemPrompt.trim();
             if (temperature !== undefined) requestBody.temperature = temperature;
             if (topP !== undefined) requestBody.top_p = topP;
             if (topK !== undefined) requestBody.top_k = topK;
             if (stopSequences.length) requestBody.stop_sequences = stopSequences;
+            if (s.toolsJson.trim()) { try { requestBody.tools = JSON.parse(s.toolsJson); } catch (_) {} }
+            if (s.toolChoice) requestBody.tool_choice = s.toolChoice;
+            if (s.customParams.trim()) { try { Object.assign(requestBody, JSON.parse(s.customParams)); } catch (_) {} }
             return requestBody;
           }
 
           if (provider === "ollama") {
             const requestBody = {
-              model: state.settings.model,
+              model: s.model,
               messages: buildApiMessages(messages),
-              stream: state.settings.streaming,
+              stream: s.streaming,
             };
             const options = {};
             if (maxTokens !== undefined) options.num_predict = maxTokens;
             if (temperature !== undefined) options.temperature = temperature;
             if (topP !== undefined) options.top_p = topP;
             if (topK !== undefined) options.top_k = topK;
+            if (seed !== undefined) options.seed = seed;
             if (stopSequences.length) options.stop = stopSequences;
-            if (Object.keys(options).length) requestBody.options = options;
+            const minP = parseOptionalFloat(s.minP);
+            const repeatPenalty = parseOptionalFloat(s.repeatPenalty);
+            const repeatLastN = parseOptionalInt(s.repeatLastN);
+            const tfsZ = parseOptionalFloat(s.tfsZ);
+            const mirostat = parseOptionalInt(s.mirostat);
+            const mirostatEta = parseOptionalFloat(s.mirostatEta);
+            const mirostatTau = parseOptionalFloat(s.mirostatTau);
+            const numKeep = parseOptionalInt(s.numKeep);
+            const numCtx = parseOptionalInt(s.numCtx);
+            const numBatch = parseOptionalInt(s.numBatch);
+            const numThread = parseOptionalInt(s.numThread);
+            const numGpu = parseOptionalInt(s.numGpu);
+            if (minP !== undefined) options.min_p = minP;
+            if (repeatPenalty !== undefined) options.repeat_penalty = repeatPenalty;
+            if (repeatLastN !== undefined) options.repeat_last_n = repeatLastN;
+            if (tfsZ !== undefined) options.tfs_z = tfsZ;
+            if (mirostat !== undefined) options.mirostat = mirostat;
+            if (mirostatEta !== undefined) options.mirostat_eta = mirostatEta;
+            if (mirostatTau !== undefined) options.mirostat_tau = mirostatTau;
+            if (numKeep !== undefined) options.num_keep = numKeep;
+            if (numCtx !== undefined) options.num_ctx = numCtx;
+            if (numBatch !== undefined) options.num_batch = numBatch;
+            if (numThread !== undefined) options.num_thread = numThread;
+            if (numGpu !== undefined) options.num_gpu = numGpu;
+            options.use_mmap = s.useMmap;
+            options.use_mlock = s.useMlock;
+            requestBody.options = options;
+            if (s.format) requestBody.format = s.format;
+            if (s.keepAlive !== "") requestBody.keep_alive = s.keepAlive;
+            if (s.think) requestBody.think = true;
+            if (s.customParams.trim()) { try { Object.assign(requestBody, JSON.parse(s.customParams)); } catch (_) {} }
             return requestBody;
           }
 
           const requestBody = {
-            model: state.settings.model,
-            messages: buildApiMessagesWithSystem(state.settings.systemPrompt.trim() || DMR_OPENAI_DEFAULT_SYSTEM_PROMPT, messages),
-            stream: state.settings.streaming,
+            model: s.model,
+            messages: buildApiMessagesWithSystem(s.systemPrompt.trim() || DMR_OPENAI_DEFAULT_SYSTEM_PROMPT, messages),
+            stream: s.streaming,
           };
 
           requestBody.max_tokens = clamp(maxTokens !== undefined ? maxTokens : 300, 300, 500);
@@ -2603,7 +3094,13 @@
           if (topP !== undefined) requestBody.top_p = topP;
           if (presencePenalty !== undefined) requestBody.presence_penalty = presencePenalty;
           if (frequencyPenalty !== undefined) requestBody.frequency_penalty = frequencyPenalty;
+          if (seed !== undefined) requestBody.seed = seed;
           requestBody.stop = uniqueValues([...DMR_OPENAI_REQUIRED_STOPS, ...stopSequences]);
+          if (s.reasoningEffort) requestBody.reasoning_effort = s.reasoningEffort;
+          if (s.logitBias.trim()) { try { requestBody.logit_bias = JSON.parse(s.logitBias); } catch (_) {} }
+          if (s.toolsJson.trim()) { try { requestBody.tools = JSON.parse(s.toolsJson); } catch (_) {} }
+          if (s.toolChoice) requestBody.tool_choice = s.toolChoice;
+          if (s.customParams.trim()) { try { Object.assign(requestBody, JSON.parse(s.customParams)); } catch (_) {} }
           return requestBody;
         }
 
@@ -2973,9 +3470,27 @@
             const reader = runUiStep("response.body.getReader", () => response.body.getReader());
             const decoder = new TextDecoder();
             let buffer = "";
+            let renderBuffer = "";
             let doneStreaming = false;
             let sawStructuredChunk = false;
             let streamingUsage = null;
+            const streamChunkSize = parseOptionalInt(state.settings.streamChunkSize);
+            function flushRenderBuffer() {
+              if (!renderBuffer) return;
+              targetMsg.content += renderBuffer;
+              renderBuffer = "";
+              renderMessages();
+            }
+            function onStreamDelta(delta) {
+              sawStructuredChunk = true;
+              if (!streamChunkSize) {
+                targetMsg.content += delta;
+                renderMessages();
+              } else {
+                renderBuffer += delta;
+                if (renderBuffer.length >= streamChunkSize) flushRenderBuffer();
+              }
+            }
 
             while (!doneStreaming) {
               const result = await runAsyncStep("stream reader.read", async () => {
@@ -2988,11 +3503,7 @@
                 const lines = buffer.split("\n");
                 buffer = lines.pop() || "";
                 runUiStep("parseOllamaChunk", () => {
-                  parseOllamaChunk(lines.join("\n"), (delta) => {
-                    sawStructuredChunk = true;
-                    targetMsg.content += delta;
-                    renderMessages();
-                  }, (doneData) => {
+                  parseOllamaChunk(lines.join("\n"), onStreamDelta, (doneData) => {
                     sawStructuredChunk = true;
                     doneStreaming = true;
                     if (doneData && doneData.prompt_eval_count != null) {
@@ -3006,11 +3517,7 @@
                 const consumable = buffer.slice(0, boundary);
                 buffer = buffer.slice(boundary + 2);
                 runUiStep("parseAnthropicChunk", () => {
-                  parseAnthropicChunk(consumable, (delta) => {
-                    sawStructuredChunk = true;
-                    targetMsg.content += delta;
-                    renderMessages();
-                  }, () => {
+                  parseAnthropicChunk(consumable, onStreamDelta, () => {
                     sawStructuredChunk = true;
                     doneStreaming = true;
                   });
@@ -3021,11 +3528,7 @@
                 const consumable = buffer.slice(0, boundary);
                 buffer = buffer.slice(boundary + 2);
                 runUiStep("parseSseChunk", () => {
-                  parseSseChunk(consumable, (delta) => {
-                    sawStructuredChunk = true;
-                    targetMsg.content += delta;
-                    renderMessages();
-                  }, () => {
+                  parseSseChunk(consumable, onStreamDelta, () => {
                     sawStructuredChunk = true;
                     doneStreaming = true;
                   });
@@ -3033,13 +3536,11 @@
               }
             }
 
+            flushRenderBuffer();
+
             if (state.settings.provider === "ollama" && buffer.trim()) {
               runUiStep("parseOllamaChunk(final buffer)", () => {
-                parseOllamaChunk(buffer, (delta) => {
-                  sawStructuredChunk = true;
-                  targetMsg.content += delta;
-                  renderMessages();
-                }, (doneData) => {
+                parseOllamaChunk(buffer, onStreamDelta, (doneData) => {
                   sawStructuredChunk = true;
                   doneStreaming = true;
                   if (doneData && doneData.prompt_eval_count != null) {
@@ -3049,16 +3550,14 @@
               });
             } else if (state.settings.provider === "anthropic" && buffer.trim()) {
               runUiStep("parseAnthropicChunk(final buffer)", () => {
-                parseAnthropicChunk(buffer, (delta) => {
-                  sawStructuredChunk = true;
-                  targetMsg.content += delta;
-                  renderMessages();
-                }, () => {
+                parseAnthropicChunk(buffer, onStreamDelta, () => {
                   sawStructuredChunk = true;
                   doneStreaming = true;
                 });
               });
             }
+
+            flushRenderBuffer();
 
             if (!sawStructuredChunk && !targetMsg.content.trim()) {
               if (state.settings.provider === "ollama") {
@@ -3270,104 +3769,171 @@
           const nextModel = event.target.value;
           state.settings.model = nextModel;
           syncActiveProfile(state.providerProfiles, state.settings);
-          if (state.draftSettings && state.draftSettings.provider === state.settings.provider) {
-            state.draftSettings.model = nextModel;
-            if (state.draftProviderProfiles) {
-              syncActiveProfile(state.draftProviderProfiles, state.draftSettings);
-            }
-            populateSettingsModelSelect(nextModel);
-          }
+          populateSettingsModelSelect(nextModel);
           render();
         }
 
-        refs.settingsButton.addEventListener("click", openSettings);
-        refs.closeSettingsButton.addEventListener("click", closeSettings);
-        refs.cancelSettingsButton.addEventListener("click", closeSettings);
-        refs.saveSettingsButton.addEventListener("click", () => {
-          if (!state.draftSettings.model.trim()) {
-            state.modelsStatus = { tone: "error", text: "Select a model before saving." };
-            updateStatusUi();
-            refs.modelSelect.focus();
-            return;
-          }
-          syncActiveProfile(state.draftProviderProfiles, state.draftSettings);
-          state.providerProfiles = cloneProviderProfiles(state.draftProviderProfiles);
-          state.settings = { ...state.draftSettings };
-          closeSettings();
-          render();
-        });
+        refs.settingsButton.addEventListener("click", () => openSidebar("settings"));
+        refs.debugButton.addEventListener("click", () => openSidebar("debug"));
+        refs.settingsTabBtn.addEventListener("click", () => switchTab("settings"));
+        refs.debugTabBtn.addEventListener("click", () => switchTab("debug"));
+        refs.closeSidebarButton.addEventListener("click", closeSidebar);
 
         refs.providerInput.addEventListener("change", (event) => {
           const nextProvider = event.target.value;
-          syncActiveProfile(state.draftProviderProfiles, state.draftSettings);
+          syncActiveProfile(state.providerProfiles, state.settings);
           state.availableModels = [];
           clearStatuses();
-          applyDraftProvider(nextProvider);
+          applyProvider(nextProvider);
           refreshProviderConnection({ silent: true, focusSelect: false });
         });
 
-        refs.streamingToggle.addEventListener("click", () => {
-          const next = !state.draftSettings.streaming;
-          state.draftSettings.streaming = next;
-          refs.streamingToggle.classList.toggle("is-on", next);
-          refs.streamingToggle.setAttribute("aria-pressed", String(next));
-        });
+        function bindToggle(btn, key, syncProfile) {
+          btn.addEventListener("click", () => {
+            state.settings[key] = !state.settings[key];
+            syncToggle(btn, state.settings[key]);
+            if (syncProfile) syncActiveProfile(state.providerProfiles, state.settings);
+          });
+        }
 
-        refs.debugToggle.addEventListener("click", () => {
-          const next = !state.draftSettings.debugPanel;
-          state.draftSettings.debugPanel = next;
-          refs.debugToggle.classList.toggle("is-on", next);
-          refs.debugToggle.setAttribute("aria-pressed", String(next));
-        });
+        bindToggle(refs.streamingToggle, "streaming", false);
+        bindToggle(refs.showReasoningTagsToggle, "showReasoningTags", false);
+        bindToggle(refs.thinkToggle, "think", true);
+        bindToggle(refs.useMmapToggle, "useMmap", true);
+        bindToggle(refs.useMlockToggle, "useMlock", true);
 
         refs.apiBaseUrlInput.addEventListener("input", (event) => {
-          state.draftSettings.apiBaseUrl = event.target.value;
-          syncActiveProfile(state.draftProviderProfiles, state.draftSettings);
+          state.settings.apiBaseUrl = event.target.value;
+          syncActiveProfile(state.providerProfiles, state.settings);
           state.availableModels = [];
           populateSettingsModelSelect("");
           clearStatuses();
         });
         refs.apiKeyInput.addEventListener("input", (event) => {
-          state.draftSettings.apiKey = event.target.value;
-          syncActiveProfile(state.draftProviderProfiles, state.draftSettings);
+          state.settings.apiKey = event.target.value;
+          syncActiveProfile(state.providerProfiles, state.settings);
           state.availableModels = [];
           populateSettingsModelSelect("");
           clearStatuses();
         });
         refs.modelSelect.addEventListener("change", (event) => {
-          state.draftSettings.model = event.target.value;
-          syncActiveProfile(state.draftProviderProfiles, state.draftSettings);
+          state.settings.model = event.target.value;
+          syncActiveProfile(state.providerProfiles, state.settings);
+          syncVisibleModelSelectors();
         });
         refs.systemPromptInput.addEventListener("input", (event) => {
-          state.draftSettings.systemPrompt = event.target.value;
+          state.settings.systemPrompt = event.target.value;
         });
         refs.maxTokensInput.addEventListener("input", (event) => {
-          state.draftSettings.maxTokens = event.target.value;
-          syncActiveProfile(state.draftProviderProfiles, state.draftSettings);
+          state.settings.maxTokens = event.target.value;
+          syncActiveProfile(state.providerProfiles, state.settings);
         });
         refs.temperatureInput.addEventListener("input", (event) => {
-          state.draftSettings.temperature = event.target.value;
-          syncActiveProfile(state.draftProviderProfiles, state.draftSettings);
+          state.settings.temperature = event.target.value;
+          syncActiveProfile(state.providerProfiles, state.settings);
         });
         refs.topPInput.addEventListener("input", (event) => {
-          state.draftSettings.topP = event.target.value;
-          syncActiveProfile(state.draftProviderProfiles, state.draftSettings);
+          state.settings.topP = event.target.value;
+          syncActiveProfile(state.providerProfiles, state.settings);
         });
         refs.topKInput.addEventListener("input", (event) => {
-          state.draftSettings.topK = event.target.value;
-          syncActiveProfile(state.draftProviderProfiles, state.draftSettings);
+          state.settings.topK = event.target.value;
+          syncActiveProfile(state.providerProfiles, state.settings);
         });
         refs.presencePenaltyInput.addEventListener("input", (event) => {
-          state.draftSettings.presencePenalty = event.target.value;
-          syncActiveProfile(state.draftProviderProfiles, state.draftSettings);
+          state.settings.presencePenalty = event.target.value;
+          syncActiveProfile(state.providerProfiles, state.settings);
         });
         refs.frequencyPenaltyInput.addEventListener("input", (event) => {
-          state.draftSettings.frequencyPenalty = event.target.value;
-          syncActiveProfile(state.draftProviderProfiles, state.draftSettings);
+          state.settings.frequencyPenalty = event.target.value;
+          syncActiveProfile(state.providerProfiles, state.settings);
         });
         refs.stopSequencesInput.addEventListener("input", (event) => {
-          state.draftSettings.stopSequences = event.target.value;
-          syncActiveProfile(state.draftProviderProfiles, state.draftSettings);
+          state.settings.stopSequences = event.target.value;
+          syncActiveProfile(state.providerProfiles, state.settings);
+        });
+        refs.seedInput.addEventListener("input", (event) => {
+          state.settings.seed = event.target.value;
+          syncActiveProfile(state.providerProfiles, state.settings);
+        });
+        refs.minPInput.addEventListener("input", (event) => {
+          state.settings.minP = event.target.value;
+          syncActiveProfile(state.providerProfiles, state.settings);
+        });
+        refs.repeatPenaltyInput.addEventListener("input", (event) => {
+          state.settings.repeatPenalty = event.target.value;
+          syncActiveProfile(state.providerProfiles, state.settings);
+        });
+        refs.repeatLastNInput.addEventListener("input", (event) => {
+          state.settings.repeatLastN = event.target.value;
+          syncActiveProfile(state.providerProfiles, state.settings);
+        });
+        refs.tfszInput.addEventListener("input", (event) => {
+          state.settings.tfsZ = event.target.value;
+          syncActiveProfile(state.providerProfiles, state.settings);
+        });
+        refs.mirostatInput.addEventListener("change", (event) => {
+          state.settings.mirostat = event.target.value;
+          syncActiveProfile(state.providerProfiles, state.settings);
+        });
+        refs.mirostatEtaInput.addEventListener("input", (event) => {
+          state.settings.mirostatEta = event.target.value;
+          syncActiveProfile(state.providerProfiles, state.settings);
+        });
+        refs.mirostatTauInput.addEventListener("input", (event) => {
+          state.settings.mirostatTau = event.target.value;
+          syncActiveProfile(state.providerProfiles, state.settings);
+        });
+        refs.numKeepInput.addEventListener("input", (event) => {
+          state.settings.numKeep = event.target.value;
+          syncActiveProfile(state.providerProfiles, state.settings);
+        });
+        refs.numCtxInput.addEventListener("input", (event) => {
+          state.settings.numCtx = event.target.value;
+          syncActiveProfile(state.providerProfiles, state.settings);
+        });
+        refs.numBatchInput.addEventListener("input", (event) => {
+          state.settings.numBatch = event.target.value;
+          syncActiveProfile(state.providerProfiles, state.settings);
+        });
+        refs.numThreadInput.addEventListener("input", (event) => {
+          state.settings.numThread = event.target.value;
+          syncActiveProfile(state.providerProfiles, state.settings);
+        });
+        refs.numGpuInput.addEventListener("input", (event) => {
+          state.settings.numGpu = event.target.value;
+          syncActiveProfile(state.providerProfiles, state.settings);
+        });
+        refs.formatInput.addEventListener("change", (event) => {
+          state.settings.format = event.target.value;
+          syncActiveProfile(state.providerProfiles, state.settings);
+        });
+        refs.keepAliveInput.addEventListener("input", (event) => {
+          state.settings.keepAlive = event.target.value;
+          syncActiveProfile(state.providerProfiles, state.settings);
+        });
+        refs.streamChunkSizeInput.addEventListener("input", (event) => {
+          state.settings.streamChunkSize = event.target.value;
+        });
+        refs.reasoningEffortInput.addEventListener("change", (event) => {
+          state.settings.reasoningEffort = event.target.value;
+          syncActiveProfile(state.providerProfiles, state.settings);
+        });
+        refs.logitBiasInput.addEventListener("input", (event) => {
+          state.settings.logitBias = event.target.value;
+          syncActiveProfile(state.providerProfiles, state.settings);
+        });
+        refs.toolsJsonInput.addEventListener("input", (event) => {
+          state.settings.toolsJson = event.target.value;
+          syncActiveProfile(state.providerProfiles, state.settings);
+        });
+        refs.toolChoiceInput.addEventListener("change", (event) => {
+          state.settings.toolChoice = event.target.value;
+          syncActiveProfile(state.providerProfiles, state.settings);
+        });
+        refs.customParamsInput.addEventListener("input", (event) => {
+          state.settings.customParams = event.target.value;
+          syncActiveProfile(state.providerProfiles, state.settings);
         });
 
         refs.testProviderButton.addEventListener("click", () => {
@@ -3399,20 +3965,8 @@
           state.debugEntries = [];
           renderDebugPanel();
         });
-        refs.closeDebugButton.addEventListener("click", () => {
-          state.settings.debugPanel = false;
-          if (state.draftSettings) {
-            state.draftSettings.debugPanel = false;
-            refs.debugToggle.classList.remove("is-on");
-            refs.debugToggle.setAttribute("aria-pressed", "false");
-          }
-          render();
-        });
         refs.closeFatalErrorButton.addEventListener("click", closeFatalError);
         refs.dismissFatalErrorButton.addEventListener("click", closeFatalError);
-        refs.settingsModal.addEventListener("click", (event) => {
-          if (event.target === refs.settingsModal) closeSettings();
-        });
         refs.fatalErrorModal.addEventListener("click", (event) => {
           if (event.target === refs.fatalErrorModal) closeFatalError();
         });
@@ -3423,8 +3977,8 @@
         });
 
         document.addEventListener("keydown", (event) => {
-          if (event.key === "Escape" && refs.settingsModal.classList.contains("is-open")) {
-            closeSettings();
+          if (event.key === "Escape" && refs.sidebar.classList.contains("is-open")) {
+            closeSidebar();
           }
           if (event.key === "Escape" && refs.fatalErrorModal.classList.contains("is-open")) {
             closeFatalError();
@@ -3445,7 +3999,27 @@
           addDebugEntry("Unhandled Rejection", formatErrorDetails(event.reason));
         });
 
+        let isResizing = false;
+        refs.sidebarResizeHandle.addEventListener("mousedown", (e) => {
+          isResizing = true;
+          refs.sidebarResizeHandle.classList.add("is-resizing");
+          document.body.style.userSelect = "none";
+          e.preventDefault();
+        });
+        document.addEventListener("mousemove", (e) => {
+          if (!isResizing) return;
+          const newWidth = Math.max(240, Math.min(600, window.innerWidth - e.clientX));
+          refs.sidebar.style.width = newWidth + "px";
+        });
+        document.addEventListener("mouseup", () => {
+          if (!isResizing) return;
+          isResizing = false;
+          refs.sidebarResizeHandle.classList.remove("is-resizing");
+          document.body.style.userSelect = "";
+        });
+
         renderSuggestions();
+        populateSettingsInputs();
         syncProviderUi(state.settings);
         setComposerValue("", refs.composerEmpty);
         render();
