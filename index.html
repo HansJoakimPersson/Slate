@@ -2337,30 +2337,33 @@
           render();
         }
 
-        function buildApiMessages() {
+        function buildApiMessages(messages) {
+          messages = messages || state.messages;
           const apiMessages = [];
           if (state.settings.systemPrompt.trim()) {
             apiMessages.push({ role: "system", content: state.settings.systemPrompt.trim() });
           }
-          state.messages.forEach((message) => {
+          messages.forEach((message) => {
             apiMessages.push({ role: message.role, content: message.content });
           });
           return apiMessages;
         }
 
-        function buildApiMessagesWithSystem(systemPromptText) {
+        function buildApiMessagesWithSystem(systemPromptText, messages) {
+          messages = messages || state.messages;
           const apiMessages = [];
           if (String(systemPromptText || "").trim()) {
             apiMessages.push({ role: "system", content: String(systemPromptText).trim() });
           }
-          state.messages.forEach((message) => {
+          messages.forEach((message) => {
             apiMessages.push({ role: message.role, content: message.content });
           });
           return apiMessages;
         }
 
-        function buildAnthropicMessages() {
-          return state.messages.map((message) => ({
+        function buildAnthropicMessages(messages) {
+          messages = messages || state.messages;
+          return messages.map((message) => ({
             role: message.role,
             content: message.content,
           }));
@@ -2395,7 +2398,8 @@
           return Array.from(new Set(values.filter(Boolean)));
         }
 
-        function buildRequestBody() {
+        function buildRequestBody(messages) {
+          messages = messages || state.messages;
           const provider = state.settings.provider;
           const maxTokens = parseOptionalInt(state.settings.maxTokens);
           const temperature = parseOptionalFloat(state.settings.temperature);
@@ -2408,7 +2412,7 @@
           if (provider === "anthropic") {
             const requestBody = {
               model: state.settings.model,
-              messages: buildAnthropicMessages(),
+              messages: buildAnthropicMessages(messages),
               max_tokens: maxTokens || 1024,
               stream: state.settings.streaming,
             };
@@ -2424,7 +2428,7 @@
           if (provider === "ollama") {
             const requestBody = {
               model: state.settings.model,
-              messages: buildApiMessages(),
+              messages: buildApiMessages(messages),
               stream: state.settings.streaming,
             };
             const options = {};
@@ -2439,7 +2443,7 @@
 
           const requestBody = {
             model: state.settings.model,
-            messages: buildApiMessagesWithSystem(state.settings.systemPrompt.trim() || DMR_OPENAI_DEFAULT_SYSTEM_PROMPT),
+            messages: buildApiMessagesWithSystem(state.settings.systemPrompt.trim() || DMR_OPENAI_DEFAULT_SYSTEM_PROMPT, messages),
             stream: state.settings.streaming,
           };
 
@@ -2732,9 +2736,9 @@
           return { response, endpoint: fallbackEndpoint };
         }
 
-        async function retryOllamaAsNonStream(endpoint, headers) {
+        async function retryOllamaAsNonStream(endpoint, headers, contextMessages) {
           addDebugEntry("Chat Fallback", "Ollama response was empty. Retrying with stream=false.");
-          const requestBody = buildRequestBody();
+          const requestBody = buildRequestBody(contextMessages);
           requestBody.stream = false;
           const retryData = await requestJsonCompletion(endpoint, headers, requestBody, state.settings.provider, "Chat Retry Request");
           const retryContent = extractAssistantContent(retryData, state.settings.provider);
