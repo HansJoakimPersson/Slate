@@ -1937,7 +1937,7 @@
               apiBaseUrl: "http://127.0.0.1:12434/engines/v1",
               apiKey: "",
               model: "",
-              maxTokens: "300",
+              maxTokens: "4096",
               temperature: "0.4",
               topP: "1",
               topK: "",
@@ -3089,7 +3089,7 @@
             stream: s.streaming,
           };
 
-          requestBody.max_tokens = clamp(maxTokens !== undefined ? maxTokens : 300, 300, 500);
+          requestBody.max_tokens = maxTokens || 4096;
           requestBody.temperature = temperature !== undefined ? temperature : 0.4;
           if (topP !== undefined) requestBody.top_p = topP;
           if (presencePenalty !== undefined) requestBody.presence_penalty = presencePenalty;
@@ -3104,7 +3104,7 @@
           return requestBody;
         }
 
-        function parseSseChunk(chunkText, onDelta, onDone) {
+        function parseSseChunk(chunkText, onDelta, onDone, thinkState) {
           const events = chunkText.split("\n\n");
           events.forEach((event) => {
             const lines = event.split("\n");
@@ -3119,8 +3119,17 @@
               }
               try {
                 const parsed = JSON.parse(data);
-                const delta = parsed && parsed.choices && parsed.choices[0] && parsed.choices[0].delta && parsed.choices[0].delta.content;
-                if (typeof delta === "string") onDelta(delta);
+                const delta = parsed && parsed.choices && parsed.choices[0] && parsed.choices[0].delta;
+                const reasoning = delta && delta.reasoning_content;
+                const content = delta && delta.content;
+                if (typeof reasoning === "string" && reasoning) {
+                  if (thinkState && !thinkState.open) { thinkState.open = true; onDelta("<think>"); }
+                  onDelta(reasoning);
+                }
+                if (typeof content === "string" && content) {
+                  if (thinkState && thinkState.open) { thinkState.open = false; onDelta("</think>"); }
+                  onDelta(content);
+                }
               } catch (_) {}
             });
           });
@@ -3288,7 +3297,10 @@
               content = ollamaContent;
             }
           } else {
-            content = (data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "";
+            const msg = data && data.choices && data.choices[0] && data.choices[0].message;
+            const reasoning = (msg && msg.reasoning_content) || "";
+            const text = (msg && msg.content) || "";
+            content = reasoning ? `<think>${reasoning}</think>${text}` : text;
           }
           if (provider === "openai") {
             const stopSequences = uniqueValues([
@@ -3545,7 +3557,7 @@
                   parseSseChunk(consumable, onStreamDelta, () => {
                     sawStructuredChunk = true;
                     doneStreaming = true;
-                  });
+                  }, thinkState);
                 });
               }
             }
