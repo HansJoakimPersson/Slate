@@ -48,6 +48,13 @@
         font: inherit;
       }
 
+      button {
+        background: transparent;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+      }
+
       .hidden {
         display: none !important;
       }
@@ -416,6 +423,12 @@
           calc(100% - 22px) 20px,
           calc(100% - 15px) 20px;
         background-size: 7px 7px, 7px 7px;
+      }
+
+      .model-picker option {
+        font-size: 14px;
+        font-weight: 400;
+        letter-spacing: 0;
       }
 
       .responding-label {
@@ -1457,7 +1470,7 @@
             <span id="debugCount" class="text-[10px] text-muted-foreground/60 bg-secondary px-1.5 py-0.5 rounded-full">0</span>
           </div>
           <div class="flex items-center gap-0.5">
-            <button id="clearDebugButton" class="inline-flex items-center justify-center w-7 h-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors duration-150" type="button" aria-label="Clear debug log">
+            <button id="clearDebugButton" class="inline-flex items-center justify-center w-7 h-7 rounded-lg text-muted-foreground hover:text-foreground transition-colors duration-150" type="button" aria-label="Clear debug log">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash2 w-3.5 h-3.5" aria-hidden="true">
                 <path d="M3 6h18"></path>
                 <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
