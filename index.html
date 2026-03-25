@@ -1901,7 +1901,7 @@
               apiBaseUrl: "http://127.0.0.1:12434/",
               apiKey: "",
               model: "",
-              maxTokens: "512",
+              maxTokens: "",
               temperature: "0.7",
               topP: "0.9",
               topK: "40",
@@ -3145,15 +3145,22 @@
           });
         }
 
-        function parseOllamaChunk(chunkText, onDelta, onDone) {
+        function parseOllamaChunk(chunkText, onDelta, onDone, thinkState) {
           const lines = chunkText.split("\n");
           lines.forEach((line) => {
             const trimmed = line.trim();
             if (!trimmed) return;
             try {
               const parsed = JSON.parse(trimmed);
-              const delta = parsed && parsed.message && parsed.message.content;
-              if (typeof delta === "string" && delta) onDelta(delta);
+              const thinking = parsed && parsed.message && parsed.message.thinking;
+              const content = parsed && parsed.message && parsed.message.content;
+              if (thinkState && typeof thinking === "string" && thinking) {
+                if (!thinkState.open) { thinkState.open = true; onDelta("<think>"); }
+                onDelta(thinking);
+              } else if (typeof content === "string" && content) {
+                if (thinkState && thinkState.open) { thinkState.open = false; onDelta("</think>"); }
+                onDelta(content);
+              }
               if (parsed && parsed.done) onDone(parsed);
             } catch (_) {}
           });
@@ -3272,10 +3279,16 @@
             content = ((data && data.content) || [])
               .map((block) => (block && typeof block.text === "string" ? block.text : ""))
               .join("");
+          } else if (provider === "ollama") {
+            const ollamaContent = (data && data.message && data.message.content) || "";
+            const ollamaThinking = (data && data.message && data.message.thinking) || "";
+            if (ollamaThinking) {
+              content = `<think>${ollamaThinking}</think>${ollamaContent}`;
+            } else {
+              content = ollamaContent;
+            }
           } else {
-            content = provider === "ollama"
-              ? (data && data.message && data.message.content) || ""
-              : (data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "";
+            content = (data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "";
           }
           if (provider === "openai") {
             const stopSequences = uniqueValues([
@@ -3472,6 +3485,7 @@
             let buffer = "";
             let renderBuffer = "";
             let doneStreaming = false;
+            const thinkState = { open: false };
             let sawStructuredChunk = false;
             let streamingUsage = null;
             const streamChunkSize = parseOptionalInt(state.settings.streamChunkSize);
@@ -3509,7 +3523,7 @@
                     if (doneData && doneData.prompt_eval_count != null) {
                       streamingUsage = { promptTokens: doneData.prompt_eval_count, completionTokens: doneData.eval_count || 0 };
                     }
-                  });
+                  }, thinkState);
                 });
               } else if (state.settings.provider === "anthropic") {
                 const boundary = buffer.lastIndexOf("\n\n");
@@ -3546,7 +3560,7 @@
                   if (doneData && doneData.prompt_eval_count != null) {
                     streamingUsage = { promptTokens: doneData.prompt_eval_count, completionTokens: doneData.eval_count || 0 };
                   }
-                });
+                }, thinkState);
               });
             } else if (state.settings.provider === "anthropic" && buffer.trim()) {
               runUiStep("parseAnthropicChunk(final buffer)", () => {
