@@ -3095,7 +3095,7 @@
           if (presencePenalty !== undefined) requestBody.presence_penalty = presencePenalty;
           if (frequencyPenalty !== undefined) requestBody.frequency_penalty = frequencyPenalty;
           if (seed !== undefined) requestBody.seed = seed;
-          requestBody.stop = uniqueValues([...DMR_OPENAI_REQUIRED_STOPS, ...stopSequences]);
+          if (stopSequences.length) requestBody.stop = stopSequences;
           if (s.reasoningEffort) requestBody.reasoning_effort = s.reasoningEffort;
           if (s.logitBias.trim()) { try { requestBody.logit_bias = JSON.parse(s.logitBias); } catch (_) {} }
           if (s.toolsJson.trim()) { try { requestBody.tools = JSON.parse(s.toolsJson); } catch (_) {} }
