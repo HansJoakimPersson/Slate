@@ -2604,6 +2604,16 @@
           return { content, changed: changed && content !== raw };
         }
 
+        function applyStopSequences(text, stopSequences) {
+          if (!stopSequences || !stopSequences.length) return text;
+          let cutAt = -1;
+          for (const seq of stopSequences) {
+            const idx = text.indexOf(seq);
+            if (idx !== -1 && (cutAt === -1 || idx < cutAt)) cutAt = idx;
+          }
+          return cutAt !== -1 ? text.slice(0, cutAt) : text;
+        }
+
         function extractAssistantContent(data, provider) {
           let content = "";
           if (provider === "anthropic") {
@@ -2614,6 +2624,13 @@
             content = provider === "ollama"
               ? (data && data.message && data.message.content) || ""
               : (data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "";
+          }
+          if (provider === "openai") {
+            const stopSequences = uniqueValues([
+              ...DMR_OPENAI_REQUIRED_STOPS,
+              ...parseStopSequences(state.settings.stopSequences),
+            ]);
+            content = applyStopSequences(content, stopSequences);
           }
           const cleaned = cleanupAssistantContent(content);
           if (cleaned.changed) {
