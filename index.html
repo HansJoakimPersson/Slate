@@ -2626,13 +2626,6 @@
           return cleaned.content;
         }
 
-        function validateProviderResponse(data, provider) {
-          if (provider !== "openai") return;
-          const promptTokens = data && data.usage && data.usage.prompt_tokens;
-          if (typeof promptTokens === "number" && promptTokens < 20) {
-            throw new Error("OpenAI-compatible response indicates the system prompt was not applied correctly.");
-          }
-        }
 
         async function requestJsonCompletion(endpoint, headers, requestBody, provider, label) {
           addDebugEntry(label || "Chat Retry Request", {
@@ -2666,10 +2659,6 @@
           const data = runUiStep("retry parseApiTextResponse", () => {
             return parseApiTextResponse(rawText, provider);
           });
-          runUiStep("retry validateProviderResponse", () => {
-            validateProviderResponse(data, provider);
-          });
-
           addDebugEntry("Chat Retry Response", {
             status: retryResponse.status,
             statusText: retryResponse.statusText,
