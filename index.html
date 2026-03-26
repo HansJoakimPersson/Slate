@@ -398,8 +398,8 @@
           linear-gradient(45deg, transparent 50%, var(--muted) 50%),
           linear-gradient(135deg, var(--muted) 50%, transparent 50%);
         background-position:
-          calc(100% - 16px) 12px,
-          calc(100% - 11px) 12px;
+          calc(100% - 16px) center,
+          calc(100% - 11px) center;
         background-size: 5px 5px, 5px 5px;
         background-repeat: no-repeat;
       }
@@ -420,8 +420,8 @@
         font-weight: 600;
         letter-spacing: -0.02em;
         background-position:
-          calc(100% - 22px) 20px,
-          calc(100% - 15px) 20px;
+          calc(100% - 22px) center,
+          calc(100% - 15px) center;
         background-size: 7px 7px, 7px 7px;
       }
 
@@ -655,14 +655,12 @@
         list-style: none;
         display: flex;
         align-items: center;
-        justify-content: space-between;
         gap: 8px;
         padding: 7px 12px;
         font-size: 13px;
         color: var(--muted);
         cursor: pointer;
         user-select: none;
-        background: var(--secondary);
         transition: color 120ms;
       }
 
@@ -672,6 +670,10 @@
 
       .message__thinking > summary:hover {
         color: var(--foreground);
+      }
+
+      .message__thinking__label {
+        flex: 1;
       }
 
       .message__thinking__chevron {
@@ -686,6 +688,30 @@
 
       .message__thinking[open] > summary .message__thinking__chevron {
         transform: rotate(-135deg) translateY(-2px);
+      }
+
+      /* spinner shown only while streaming */
+      .message__thinking__spinner {
+        display: none;
+        width: 12px;
+        height: 12px;
+        flex-shrink: 0;
+        border: 1.5px solid currentColor;
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: thinking-spin 0.7s linear infinite;
+      }
+
+      .message__thinking.is-streaming > summary .message__thinking__spinner {
+        display: block;
+      }
+
+      .message__thinking.is-streaming > summary .message__thinking__chevron {
+        display: none;
+      }
+
+      @keyframes thinking-spin {
+        to { transform: rotate(360deg); }
       }
 
       .message__thinking__body {
@@ -709,15 +735,6 @@
       .message__thinking__body pre:last-child,
       .message__thinking__body blockquote:last-child {
         margin-bottom: 0;
-      }
-
-      @keyframes thinking-pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.4; }
-      }
-
-      .message__thinking.is-streaming > summary {
-        animation: thinking-pulse 1.4s ease-in-out infinite;
       }
 
       .message__actions {
@@ -783,14 +800,58 @@
         color: var(--muted);
         padding: 6px 2px 2px;
         display: flex;
-        flex-wrap: wrap;
-        gap: 0 12px;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .message__meta-left {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        min-width: 0;
+      }
+
+      .message__meta-right {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        flex-shrink: 0;
         opacity: 0;
         transition: opacity 150ms;
       }
 
-      .message--assistant:hover .message__meta,
-      .message--assistant:focus-within .message__meta {
+      .message--assistant:hover .message__meta-right,
+      .message--assistant:focus-within .message__meta-right {
+        opacity: 1;
+      }
+
+      .message__meta-model {
+        font-size: 11.5px;
+        font-weight: 500;
+        color: var(--foreground);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 320px;
+        opacity: 0;
+        transition: opacity 150ms;
+      }
+
+      .message--assistant:hover .message__meta-model,
+      .message--assistant:focus-within .message__meta-model {
+        opacity: 1;
+      }
+
+      .message__meta-time {
+        font-size: 11px;
+        white-space: nowrap;
+        opacity: 0;
+        transition: opacity 150ms;
+      }
+
+      .message--assistant:hover .message__meta-time,
+      .message--assistant:focus-within .message__meta-time {
         opacity: 1;
       }
 
@@ -2873,26 +2934,36 @@
           });
         }
 
-        function renderAssistantContent(content) {
+        function formatThinkDuration(ms) {
+          const secs = Math.round(ms / 1000);
+          return "Thought for " + secs + " second" + (secs === 1 ? "" : "s");
+        }
+
+        function renderAssistantContent(content, meta) {
           if (!content) return "";
+          const spinner = '<span class="message__thinking__spinner"></span>';
           const chevron = '<span class="message__thinking__chevron"></span>';
           let html = "";
           let remaining = content;
           let lastIndex = 0;
           const closedRe = /<think>([\s\S]*?)<\/think>/gi;
           let match;
+          let blockIndex = 0;
 
           while ((match = closedRe.exec(content)) !== null) {
             const before = content.slice(lastIndex, match.index).trim();
             if (before) html += renderMarkdownLite(before);
             if (state.settings.showReasoningTags) {
+              const durationMs = blockIndex === 0 && meta && meta.thinkDurationMs;
+              const label = durationMs ? formatThinkDuration(durationMs) : "Reasoning";
               html +=
                 '<details class="message__thinking">' +
-                '<summary class="message__thinking__header">Reasoning' + chevron + "</summary>" +
+                '<summary><span class="message__thinking__label">' + label + "</span>" + chevron + "</summary>" +
                 '<div class="message__thinking__body">' + renderMarkdownLite(match[1]) + "</div>" +
                 "</details>";
             }
             lastIndex = match.index + match[0].length;
+            blockIndex++;
           }
 
           remaining = content.slice(lastIndex);
@@ -2903,8 +2974,8 @@
             if (state.settings.showReasoningTags) {
               const thinkBody = remaining.slice(openPos + 7);
               html +=
-                '<details class="message__thinking is-streaming" open>' +
-                '<summary class="message__thinking__header">Reasoning\u2026' + chevron + "</summary>" +
+                '<details class="message__thinking is-streaming">' +
+                '<summary>' + spinner + '<span class="message__thinking__label">Thinking\u2026</span>' + chevron + "</summary>" +
                 '<div class="message__thinking__body">' + renderMarkdownLite(thinkBody) + "</div>" +
                 "</details>";
             }
@@ -2952,7 +3023,7 @@
               content.className = "message__content";
               content.innerHTML =
                 message.role === "assistant"
-                  ? renderAssistantContent(message.content)
+                  ? renderAssistantContent(message.content, message.meta)
                   : "<p>" + escapeHtml(message.content) + "</p>";
 
               bubble.appendChild(content);
@@ -2966,25 +3037,48 @@
                   const meta = message.meta;
                   const metaPanel = document.createElement("div");
                   metaPanel.className = "message__meta";
-                  const modelShort = (meta.model || "").split("/").pop() || meta.model;
-                  if (modelShort) {
+
+                  const left = document.createElement("div");
+                  left.className = "message__meta-left";
+
+                  if (meta.model) {
                     const m = document.createElement("span");
-                    m.className = "message__meta-item";
-                    m.textContent = modelShort;
-                    metaPanel.appendChild(m);
+                    m.className = "message__meta-model";
+                    m.textContent = meta.model;
+                    left.appendChild(m);
                   }
+
+                  if (meta.createdAt) {
+                    const now = new Date();
+                    const d = new Date(meta.createdAt);
+                    const sameDay = now.toDateString() === d.toDateString();
+                    const timeStr = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+                    const label = sameDay ? "Today at " + timeStr : d.toLocaleDateString([], { month: "short", day: "numeric" }) + " at " + timeStr;
+                    const ts = document.createElement("span");
+                    ts.className = "message__meta-time";
+                    ts.textContent = label;
+                    left.appendChild(ts);
+                  }
+
+                  metaPanel.appendChild(left);
+
+                  const right = document.createElement("div");
+                  right.className = "message__meta-right";
+
                   if (meta.usage) {
                     const t = document.createElement("span");
                     t.className = "message__meta-item";
                     t.textContent = meta.usage.promptTokens + " + " + meta.usage.completionTokens + " tokens";
-                    metaPanel.appendChild(t);
+                    right.appendChild(t);
                   }
                   if (meta.durationMs != null) {
-                    const d = document.createElement("span");
-                    d.className = "message__meta-item";
-                    d.textContent = (meta.durationMs / 1000).toFixed(1) + "s";
-                    metaPanel.appendChild(d);
+                    const dur = document.createElement("span");
+                    dur.className = "message__meta-item";
+                    dur.textContent = (meta.durationMs / 1000).toFixed(1) + "s";
+                    right.appendChild(dur);
                   }
+
+                  metaPanel.appendChild(right);
                   bubble.appendChild(metaPanel);
                 }
 
@@ -3241,11 +3335,11 @@
                 const reasoning = delta && delta.reasoning_content;
                 const content = delta && delta.content;
                 if (typeof reasoning === "string" && reasoning) {
-                  if (thinkState && !thinkState.open) { thinkState.open = true; onDelta("<think>"); }
+                  if (thinkState && !thinkState.open) { thinkState.open = true; thinkState.startTime = Date.now(); onDelta("<think>"); }
                   onDelta(reasoning);
                 }
                 if (typeof content === "string" && content) {
-                  if (thinkState && thinkState.open) { thinkState.open = false; onDelta("</think>"); }
+                  if (thinkState && thinkState.open) { thinkState.open = false; thinkState.durationMs = Date.now() - (thinkState.startTime || Date.now()); onDelta("</think>"); }
                   onDelta(content);
                 }
               } catch (_) {}
@@ -3282,10 +3376,10 @@
               const thinking = parsed && parsed.message && parsed.message.thinking;
               const content = parsed && parsed.message && parsed.message.content;
               if (thinkState && typeof thinking === "string" && thinking) {
-                if (!thinkState.open) { thinkState.open = true; onDelta("<think>"); }
+                if (!thinkState.open) { thinkState.open = true; thinkState.startTime = Date.now(); onDelta("<think>"); }
                 onDelta(thinking);
               } else if (typeof content === "string" && content) {
-                if (thinkState && thinkState.open) { thinkState.open = false; onDelta("</think>"); }
+                if (thinkState && thinkState.open) { thinkState.open = false; thinkState.durationMs = Date.now() - (thinkState.startTime || Date.now()); onDelta("</think>"); }
                 onDelta(content);
               }
               if (parsed && parsed.done) onDone(parsed);
@@ -3724,7 +3818,9 @@
               model: state.settings.model,
               provider: state.settings.provider,
               durationMs: Date.now() - startTime,
+              thinkDurationMs: thinkState.durationMs || null,
               usage: streamingUsage,
+              createdAt: Date.now(),
             };
 
             return true;
@@ -3763,7 +3859,9 @@
               model: data.model || state.settings.model,
               provider,
               durationMs: Date.now() - startTime,
+              thinkDurationMs: null,
               usage,
+              createdAt: Date.now(),
             };
 
             return false;
