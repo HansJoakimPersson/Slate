@@ -412,17 +412,17 @@
       }
 
       .model-picker--hero {
-        height: 44px;
-        padding: 0 38px 0 14px;
-        border-radius: 14px;
-        font-size: 32px;
+        height: 36px;
+        padding: 0 30px 0 10px;
+        border-radius: 12px;
+        font-size: 22px;
         line-height: 1.1;
         font-weight: 600;
         letter-spacing: -0.02em;
         background-position:
-          calc(100% - 22px) center,
-          calc(100% - 15px) center;
-        background-size: 7px 7px, 7px 7px;
+          calc(100% - 18px) center,
+          calc(100% - 13px) center;
+        background-size: 6px 6px, 6px 6px;
       }
 
       .model-picker option {
@@ -1547,7 +1547,7 @@
         }
 
         .model-picker--hero {
-          font-size: 28px;
+          font-size: 20px;
         }
 
         .messages__inner {
@@ -1574,7 +1574,6 @@
                 <option value="">Select model</option>
               </select>
             </div>
-            <div class="responding-label hidden" id="respondingLabel">· Generating…</div>
           </div>
           <div class="topbar__right">
             <button id="newChatButton" class="icon-button hidden" type="button" aria-label="New chat">
@@ -2180,7 +2179,6 @@
           emptyState: document.getElementById("emptyState"),
           emptyModelSelect: document.getElementById("emptyModelSelect"),
           topModelSelect: document.getElementById("topModelSelect"),
-          respondingLabel: document.getElementById("respondingLabel"),
           newChatButton: document.getElementById("newChatButton"),
           settingsButton: document.getElementById("settingsButton"),
           conversationComposer: document.getElementById("conversationComposer"),
@@ -2773,10 +2771,15 @@
           if (!opt) return;
           const ctx = _fitCanvas.getContext("2d");
           const cs = getComputedStyle(select);
-          ctx.font = cs.fontWeight + " " + cs.fontSize + " " + cs.fontFamily;
+          // getComputedStyle returns empty strings for detached elements; fall back to
+          // a known font so the measurement is at least in the right ballpark.
+          const font = (cs.fontSize && cs.fontSize !== "0px")
+            ? cs.fontWeight + " " + cs.fontSize + " " + cs.fontFamily
+            : "500 14px system-ui";
+          ctx.font = font;
           const textWidth = ctx.measureText(opt.text).width;
-          // left padding (8px) + text + right padding for arrow (28px)
-          select.style.width = Math.ceil(textWidth) + 36 + "px";
+          // left padding (8px) + text + right padding for arrow (28px) + 20px buffer
+          select.style.width = Math.ceil(textWidth) + 56 + "px";
         }
 
         function populateVisibleModelSelect(select, selectedModel) {
@@ -2947,8 +2950,9 @@
           return "Thought for " + secs + " second" + (secs === 1 ? "" : "s");
         }
 
-        function renderAssistantContent(content, meta) {
+        function renderAssistantContent(content, thinkInfo) {
           if (!content) return "";
+          const info = thinkInfo || {};
           const spinner = '<span class="message__thinking__spinner"></span>';
           const chevron = '<span class="message__thinking__chevron"></span>';
           let html = "";
@@ -2962,8 +2966,8 @@
             const before = content.slice(lastIndex, match.index).trim();
             if (before) html += renderMarkdownLite(before);
             if (state.settings.showReasoningTags) {
-              const durationMs = blockIndex === 0 && meta && meta.thinkDurationMs;
-              const label = durationMs ? formatThinkDuration(durationMs) : "Reasoning";
+              const durationMs = blockIndex === 0 ? info.thinkDurationMs : null;
+              const label = durationMs != null ? formatThinkDuration(durationMs) : "Reasoning";
               html +=
                 '<details class="message__thinking">' +
                 '<summary><span class="message__thinking__label">' + label + "</span>" + chevron + "</summary>" +
@@ -2981,8 +2985,9 @@
             if (before) html += renderMarkdownLite(before);
             if (state.settings.showReasoningTags) {
               const thinkBody = remaining.slice(openPos + 7);
+              const startAttr = info.thinkStartTime ? ' data-think-start="' + info.thinkStartTime + '"' : "";
               html +=
-                '<details class="message__thinking is-streaming">' +
+                '<details class="message__thinking is-streaming"' + startAttr + '>' +
                 '<summary>' + spinner + '<span class="message__thinking__label">Thinking\u2026</span>' + chevron + "</summary>" +
                 '<div class="message__thinking__body">' + renderMarkdownLite(thinkBody) + "</div>" +
                 "</details>";
@@ -3003,6 +3008,9 @@
 
           if (!state.messages.length) {
             refs.messages.appendChild(refs.emptyState);
+            // emptyModelSelect is only in the DOM when emptyState is attached;
+            // fit it now so getComputedStyle returns the hero font correctly.
+            fitModelSelect(refs.emptyModelSelect);
           } else {
             const inner = document.createElement("div");
             inner.className = "messages__inner";
@@ -3029,9 +3037,14 @@
 
               const content = document.createElement("div");
               content.className = "message__content";
+              const thinkInfo = message.role === "assistant" ? {
+                thinkDurationMs: message.thinkDurationMs != null ? message.thinkDurationMs
+                  : (message.meta && message.meta.thinkDurationMs != null ? message.meta.thinkDurationMs : null),
+                thinkStartTime: message.thinkStartTime || null,
+              } : null;
               content.innerHTML =
                 message.role === "assistant"
-                  ? renderAssistantContent(message.content, message.meta)
+                  ? renderAssistantContent(message.content, thinkInfo)
                   : "<p>" + escapeHtml(message.content) + "</p>";
 
               bubble.appendChild(content);
@@ -3131,6 +3144,17 @@
             }
 
             refs.messages.appendChild(inner);
+
+            // Restore spinner progress after innerHTML re-render resets animations.
+            const now = Date.now();
+            refs.messages.querySelectorAll(".message__thinking__spinner").forEach((spinner) => {
+              const details = spinner.closest("details");
+              const startTime = details && parseInt(details.dataset.thinkStart, 10);
+              if (startTime) {
+                const period = 700;
+                spinner.style.animationDelay = "-" + ((now - startTime) % period) + "ms";
+              }
+            });
           }
 
           if (nearBottom) {
@@ -3141,7 +3165,6 @@
         function updateMeta() {
           const hasMessages = state.messages.length > 0;
           syncVisibleModelSelectors();
-          refs.respondingLabel.classList.toggle("hidden", !state.isLoading);
           refs.newChatButton.classList.toggle("hidden", !hasMessages);
           refs.conversationComposer.classList.toggle("hidden", !hasMessages);
           updateSendButtons();
@@ -3729,6 +3752,14 @@
             }
             function onStreamDelta(delta) {
               sawStructuredChunk = true;
+              // Capture think timing on the message as soon as it's available so
+              // renderMessages can use it mid-stream without waiting for meta.
+              if (thinkState.startTime != null && targetMsg.thinkStartTime == null) {
+                targetMsg.thinkStartTime = thinkState.startTime;
+              }
+              if (thinkState.durationMs != null && targetMsg.thinkDurationMs == null) {
+                targetMsg.thinkDurationMs = thinkState.durationMs;
+              }
               if (!streamChunkSize) {
                 targetMsg.content += delta;
                 renderMessages();
