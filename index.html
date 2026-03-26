@@ -3544,10 +3544,14 @@
           const s = state.settings;
           const base = s.apiBaseUrl.replace(/\/+$/, "");
           const asstContent = firstAsst.content.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+          // Present the conversation as plain text inside a single message so the
+          // model treats it as a meta-task rather than continuing the conversation.
+          const snippet = "User: " + firstUser.content.slice(0, 300) + "\nAssistant: " + asstContent.slice(0, 300);
           const titleMessages = [
-            { role: "user", content: firstUser.content },
-            { role: "assistant", content: asstContent },
-            { role: "user", content: "Give this conversation a short descriptive title. Reply with only the title, no quotes or punctuation at the start or end." },
+            {
+              role: "user",
+              content: "Give the following conversation a short descriptive title (4-8 words). Reply with only the title, no quotes or punctuation at the start or end.\n\n" + snippet,
+            },
           ];
 
           try {
