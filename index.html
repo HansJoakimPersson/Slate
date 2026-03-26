@@ -344,6 +344,157 @@
         flex-direction: column;
       }
 
+      /* ── Conversation sidebar ─────────────────────────────────────────── */
+      .conv-sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid var(--border);
+        background: var(--background);
+        overflow: hidden;
+        transition: width 180ms ease;
+      }
+
+      .conv-sidebar.is-collapsed {
+        width: 0;
+      }
+
+      .conv-sidebar__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 6px 10px 14px;
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+        gap: 4px;
+      }
+
+      .conv-sidebar__brand {
+        font-weight: 600;
+        font-size: 14px;
+        flex: 1;
+        min-width: 0;
+      }
+
+      .conv-sidebar__list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 4px 0;
+      }
+
+      .conv-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 6px 6px 6px 10px;
+        border-radius: 8px;
+        margin: 1px 6px;
+        cursor: pointer;
+      }
+
+      .conv-item:hover {
+        background: var(--secondary);
+      }
+
+      .conv-item.is-active {
+        background: var(--secondary);
+      }
+
+      .conv-item__body {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .conv-item__title {
+        font-size: 13px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: block;
+        color: var(--foreground);
+      }
+
+      .conv-item.is-active .conv-item__title {
+        font-weight: 500;
+      }
+
+      .conv-item__title-input {
+        font-size: 13px;
+        width: 100%;
+        border: 0;
+        background: transparent;
+        outline: 1px solid var(--primary);
+        border-radius: 3px;
+        padding: 0 2px;
+        color: var(--foreground);
+        font-family: inherit;
+      }
+
+      .conv-item__time {
+        font-size: 11px;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+
+      .conv-item__delete {
+        opacity: 0;
+        flex-shrink: 0;
+        color: var(--muted);
+        width: 22px;
+        height: 22px;
+        border-radius: 5px;
+        font-size: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+        transition: opacity 100ms, background 100ms;
+      }
+
+      .conv-item:hover .conv-item__delete {
+        opacity: 1;
+      }
+
+      .conv-item__delete:hover {
+        background: var(--border);
+        color: var(--foreground);
+      }
+
+      /* Mobile overlay */
+      .conv-sidebar-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.3);
+        z-index: 39;
+      }
+
+      @media (max-width: 639px) {
+        .conv-sidebar {
+          position: fixed;
+          left: 0;
+          top: 0;
+          bottom: 0;
+          z-index: 40;
+          width: 260px;
+          transform: translateX(-100%);
+          transition: transform 200ms ease;
+          border-right: 1px solid var(--border);
+        }
+        .conv-sidebar:not(.is-collapsed) {
+          transform: translateX(0);
+          width: 260px;
+        }
+        .conv-sidebar.is-collapsed {
+          transform: translateX(-100%);
+          width: 260px;
+        }
+        .conv-sidebar:not(.is-collapsed) ~ .conv-sidebar-overlay {
+          display: block;
+        }
+      }
+
       .topbar {
         display: flex;
         flex-direction: column;
@@ -1564,11 +1715,29 @@
   </head>
   <body>
     <div class="app">
+      <aside id="convSidebar" class="conv-sidebar" aria-label="Conversations">
+        <div class="conv-sidebar__header">
+          <span class="conv-sidebar__brand">Slate</span>
+          <button id="newConvButton" class="icon-button" type="button" aria-label="New conversation">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+            </svg>
+          </button>
+        </div>
+        <div id="convList" class="conv-sidebar__list"></div>
+      </aside>
+      <div class="conv-sidebar-overlay" id="convSidebarOverlay"></div>
       <div class="app__main">
       <header class="topbar">
         <div class="topbar__row">
           <div class="topbar__left">
-            <div class="brand">Slate</div>
+            <button id="convSidebarToggle" class="icon-button" type="button" aria-label="Toggle conversations">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                <path d="M9 3v18"></path>
+              </svg>
+            </button>
             <div class="model-label">
               <select id="topModelSelect" class="model-picker" aria-label="Select model">
                 <option value="">Select model</option>
@@ -2011,7 +2180,8 @@
           <div id="debugLog"></div>
         </div>
       </aside>
-    </div>
+      </div><!-- end app__main -->
+    </div><!-- end app -->
 
     <script>
       (() => {
@@ -2161,6 +2331,8 @@
 
         const state = {
           messages: [],
+          conversations: [],
+          activeConversationId: null,
           isLoading: false,
           error: null,
           availableModels: [],
@@ -2260,6 +2432,11 @@
           toolChoiceField: document.getElementById("toolChoiceField"),
           toolChoiceInput: document.getElementById("toolChoiceInput"),
           customParamsInput: document.getElementById("customParamsInput"),
+          convSidebar: document.getElementById("convSidebar"),
+          convSidebarToggle: document.getElementById("convSidebarToggle"),
+          convSidebarOverlay: document.getElementById("convSidebarOverlay"),
+          convList: document.getElementById("convList"),
+          newConvButton: document.getElementById("newConvButton"),
         };
 
         const providerConfig = {
@@ -3174,16 +3351,248 @@
           runUiStep("renderMessages", renderMessages);
           runUiStep("updateMeta", updateMeta);
           runUiStep("renderDebugPanel", renderDebugPanel);
+          runUiStep("renderConvSidebar", renderConvSidebar);
         }
 
-        function resetConversation() {
-          if (state.controller) state.controller.abort();
-          state.messages = [];
+        // ── Conversation management ────────────────────────────────────────
+
+        function createConversation() {
+          return {
+            id: "conv_" + Math.random().toString(36).slice(2, 10),
+            title: "New conversation",
+            titleGenerated: false,
+            messages: [],
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+          };
+        }
+
+        function getActiveConversation() {
+          return state.conversations.find((c) => c.id === state.activeConversationId) || null;
+        }
+
+        let _saveTimer = null;
+        function saveToStorage() {
+          clearTimeout(_saveTimer);
+          _saveTimer = setTimeout(() => {
+            try {
+              localStorage.setItem("slate_conversations", JSON.stringify(state.conversations));
+              localStorage.setItem("slate_active_conv", state.activeConversationId || "");
+            } catch (_) {}
+          }, 300);
+        }
+
+        function loadFromStorage() {
+          try {
+            const raw = localStorage.getItem("slate_conversations");
+            const parsed = raw ? JSON.parse(raw) : null;
+            if (Array.isArray(parsed) && parsed.length) {
+              state.conversations = parsed;
+              const savedId = localStorage.getItem("slate_active_conv");
+              const found = state.conversations.find((c) => c.id === savedId);
+              state.activeConversationId = found ? found.id : state.conversations[0].id;
+            } else {
+              const initial = createConversation();
+              state.conversations = [initial];
+              state.activeConversationId = initial.id;
+            }
+          } catch (_) {
+            const initial = createConversation();
+            state.conversations = [initial];
+            state.activeConversationId = initial.id;
+          }
+          state.messages = getActiveConversation().messages;
+        }
+
+        function switchConversation(id) {
+          if (id === state.activeConversationId) return;
+          if (state.controller) { state.controller.abort(); state.controller = null; }
           state.isLoading = false;
-          state.controller = null;
-          setComposerValue("", refs.composerEmpty);
+          state.activeConversationId = id;
+          state.messages = getActiveConversation().messages;
           setError(null);
+          saveToStorage();
           render();
+          // Close overlay on mobile
+          if (window.innerWidth < 640) refs.convSidebar.classList.add("is-collapsed");
+        }
+
+        function newConversation() {
+          if (state.controller) { state.controller.abort(); state.controller = null; }
+          state.isLoading = false;
+          const conv = createConversation();
+          state.conversations.unshift(conv);
+          state.activeConversationId = conv.id;
+          state.messages = conv.messages;
+          setError(null);
+          setComposerValue("", refs.composerEmpty);
+          saveToStorage();
+          render();
+        }
+
+        function deleteConversation(id) {
+          if (state.conversations.length === 1) {
+            newConversation();
+          }
+          if (id === state.activeConversationId) {
+            const remaining = state.conversations.filter((c) => c.id !== id);
+            if (remaining.length) switchConversation(remaining[0].id);
+          }
+          state.conversations = state.conversations.filter((c) => c.id !== id);
+          saveToStorage();
+          renderConvSidebar();
+        }
+
+        function renameConversation(id, title) {
+          const conv = state.conversations.find((c) => c.id === id);
+          if (!conv) return;
+          conv.title = title.trim() || "New conversation";
+          conv.titleGenerated = true;
+          conv.updatedAt = Date.now();
+          saveToStorage();
+          renderConvSidebar();
+        }
+
+        function formatConvTime(ts) {
+          const now = new Date();
+          const d = new Date(ts);
+          const sameDay = now.toDateString() === d.toDateString();
+          const yesterday = new Date(now);
+          yesterday.setDate(yesterday.getDate() - 1);
+          const isYesterday = yesterday.toDateString() === d.toDateString();
+          if (sameDay) return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+          if (isYesterday) return "Yesterday";
+          return d.toLocaleDateString([], { month: "short", day: "numeric" });
+        }
+
+        function renderConvSidebar() {
+          const list = refs.convList;
+          list.innerHTML = "";
+          const sorted = [...state.conversations].sort((a, b) => b.updatedAt - a.updatedAt);
+          sorted.forEach((conv) => {
+            const item = document.createElement("div");
+            item.className = "conv-item" + (conv.id === state.activeConversationId ? " is-active" : "");
+            item.dataset.id = conv.id;
+
+            const body = document.createElement("div");
+            body.className = "conv-item__body";
+
+            const titleEl = document.createElement("span");
+            titleEl.className = "conv-item__title";
+            titleEl.textContent = conv.title;
+            titleEl.title = conv.title;
+
+            const timeEl = document.createElement("span");
+            timeEl.className = "conv-item__time";
+            timeEl.textContent = formatConvTime(conv.updatedAt);
+
+            body.appendChild(titleEl);
+            body.appendChild(timeEl);
+
+            const del = document.createElement("button");
+            del.className = "conv-item__delete";
+            del.setAttribute("aria-label", "Delete conversation");
+            del.innerHTML = "&#x2715;";
+
+            item.appendChild(body);
+            item.appendChild(del);
+            list.appendChild(item);
+
+            // Switch on click (but not delete btn or title edit)
+            item.addEventListener("click", (e) => {
+              if (e.target === del || del.contains(e.target)) return;
+              if (e.target.tagName === "INPUT") return;
+              switchConversation(conv.id);
+            });
+
+            // Inline rename on title click when already active
+            titleEl.addEventListener("click", (e) => {
+              if (conv.id !== state.activeConversationId) return;
+              e.stopPropagation();
+              const input = document.createElement("input");
+              input.className = "conv-item__title-input";
+              input.value = conv.title === "New conversation" ? "" : conv.title;
+              input.placeholder = "Name this conversation";
+              titleEl.replaceWith(input);
+              input.focus();
+              input.select();
+              function commit() {
+                const val = input.value.trim();
+                renameConversation(conv.id, val || conv.title);
+              }
+              input.addEventListener("blur", commit);
+              input.addEventListener("keydown", (ke) => {
+                if (ke.key === "Enter") { ke.preventDefault(); input.blur(); }
+                if (ke.key === "Escape") { input.value = conv.title; input.blur(); }
+              });
+            });
+
+            del.addEventListener("click", (e) => {
+              e.stopPropagation();
+              deleteConversation(conv.id);
+            });
+          });
+        }
+
+        async function generateConversationTitle(convId) {
+          const conv = state.conversations.find((c) => c.id === convId);
+          if (!conv || conv.titleGenerated) return;
+          const firstUser = conv.messages.find((m) => m.role === "user");
+          const firstAsst = conv.messages.find((m) => m.role === "assistant");
+          if (!firstUser || !firstAsst) return;
+
+          const s = state.settings;
+          const base = s.apiBaseUrl.replace(/\/+$/, "");
+          const asstContent = firstAsst.content.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+          const titleMessages = [
+            { role: "user", content: firstUser.content },
+            { role: "assistant", content: asstContent },
+            { role: "user", content: "Give this conversation a short descriptive title. Reply with only the title, no quotes or punctuation at the start or end." },
+          ];
+
+          try {
+            let endpoint, body, headers = { "Content-Type": "application/json" };
+            if (s.apiKey) headers["Authorization"] = "Bearer " + s.apiKey.trim();
+
+            if (s.provider === "ollama") {
+              endpoint = base + "/api/chat";
+              body = { model: s.model, messages: titleMessages, stream: false };
+            } else if (s.provider === "anthropic") {
+              endpoint = base + "/v1/messages";
+              headers["x-api-key"] = s.apiKey.trim();
+              headers["anthropic-version"] = "2023-06-01";
+              delete headers["Authorization"];
+              body = { model: s.model, max_tokens: 40, messages: titleMessages };
+            } else {
+              endpoint = base + "/chat/completions";
+              body = { model: s.model, messages: titleMessages, stream: false, max_tokens: 40 };
+            }
+
+            const ctrl = new AbortController();
+            const resp = await fetch(endpoint, {
+              method: "POST",
+              headers,
+              body: JSON.stringify(body),
+              signal: ctrl.signal,
+            });
+            if (!resp.ok) return;
+            const data = await resp.json();
+            let title = "";
+            if (s.provider === "ollama") {
+              title = (data.message && data.message.content) || "";
+            } else if (s.provider === "anthropic") {
+              title = (data.content && data.content[0] && data.content[0].text) || "";
+            } else {
+              title = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "";
+            }
+            title = title.replace(/<think>[\s\S]*?<\/think>/gi, "").trim().replace(/^["']|["']$/g, "");
+            if (title) renameConversation(convId, title);
+          } catch (_) {}
+        }
+
+        // Legacy alias kept so any stray callers still work
+        function resetConversation() {
+          newConversation();
         }
 
         function buildApiMessages(messages) {
@@ -3964,7 +4373,15 @@
             assistantMessage.variants[assistantMessage.variantIndex] = assistantMessage.content;
             state.isLoading = false;
             state.controller = null;
+            const activeConv = getActiveConversation();
+            if (activeConv) activeConv.updatedAt = Date.now();
             render();
+            // Generate title after first assistant response
+            const assistantCount = state.messages.filter((m) => m.role === "assistant").length;
+            if (assistantCount === 1 && activeConv && !activeConv.titleGenerated) {
+              generateConversationTitle(state.activeConversationId);
+            }
+            saveToStorage();
           }
         }
 
@@ -4241,7 +4658,7 @@
           render();
         });
         refs.messages.addEventListener("click", handleMessageAction);
-        refs.newChatButton.addEventListener("click", resetConversation);
+        refs.newChatButton.addEventListener("click", newConversation);
         refs.dismissErrorButton.addEventListener("click", () => setError(null));
         refs.clearDebugButton.addEventListener("click", () => {
           state.debugEntries = [];
@@ -4300,6 +4717,16 @@
           document.body.style.userSelect = "";
         });
 
+        // Conv sidebar toggle
+        refs.convSidebarToggle.addEventListener("click", () => {
+          refs.convSidebar.classList.toggle("is-collapsed");
+        });
+        refs.convSidebarOverlay.addEventListener("click", () => {
+          refs.convSidebar.classList.add("is-collapsed");
+        });
+        refs.newConvButton.addEventListener("click", newConversation);
+
+        loadFromStorage();
         renderSuggestions();
         populateSettingsInputs();
         syncProviderUi(state.settings);
