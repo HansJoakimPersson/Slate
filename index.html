@@ -644,6 +644,82 @@
         background: transparent;
       }
 
+      .message__thinking {
+        margin-bottom: 0.9em;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      .message__thinking > summary {
+        list-style: none;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 7px 12px;
+        font-size: 13px;
+        color: var(--muted);
+        cursor: pointer;
+        user-select: none;
+        background: var(--secondary);
+        transition: color 120ms;
+      }
+
+      .message__thinking > summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .message__thinking > summary:hover {
+        color: var(--foreground);
+      }
+
+      .message__thinking__chevron {
+        width: 10px;
+        height: 10px;
+        border-right: 1.5px solid currentColor;
+        border-bottom: 1.5px solid currentColor;
+        transform: rotate(45deg) translateY(-2px);
+        flex-shrink: 0;
+        transition: transform 150ms;
+      }
+
+      .message__thinking[open] > summary .message__thinking__chevron {
+        transform: rotate(-135deg) translateY(-2px);
+      }
+
+      .message__thinking__body {
+        padding: 12px 16px;
+        font-size: 13px;
+        color: var(--muted);
+        border-top: 1px solid var(--border);
+      }
+
+      .message__thinking__body p,
+      .message__thinking__body ul,
+      .message__thinking__body ol,
+      .message__thinking__body pre,
+      .message__thinking__body blockquote {
+        margin: 0 0 0.7em;
+      }
+
+      .message__thinking__body p:last-child,
+      .message__thinking__body ul:last-child,
+      .message__thinking__body ol:last-child,
+      .message__thinking__body pre:last-child,
+      .message__thinking__body blockquote:last-child {
+        margin-bottom: 0;
+      }
+
+      @keyframes thinking-pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+      }
+
+      .message__thinking.is-streaming > summary {
+        animation: thinking-pulse 1.4s ease-in-out infinite;
+      }
+
       .message__actions {
         display: flex;
         align-items: center;
@@ -2797,6 +2873,49 @@
           });
         }
 
+        function renderAssistantContent(content) {
+          if (!content) return "";
+          const chevron = '<span class="message__thinking__chevron"></span>';
+          let html = "";
+          let remaining = content;
+          let lastIndex = 0;
+          const closedRe = /<think>([\s\S]*?)<\/think>/gi;
+          let match;
+
+          while ((match = closedRe.exec(content)) !== null) {
+            const before = content.slice(lastIndex, match.index).trim();
+            if (before) html += renderMarkdownLite(before);
+            if (state.settings.showReasoningTags) {
+              html +=
+                '<details class="message__thinking">' +
+                '<summary class="message__thinking__header">Reasoning' + chevron + "</summary>" +
+                '<div class="message__thinking__body">' + renderMarkdownLite(match[1]) + "</div>" +
+                "</details>";
+            }
+            lastIndex = match.index + match[0].length;
+          }
+
+          remaining = content.slice(lastIndex);
+          const openPos = remaining.indexOf("<think>");
+          if (openPos !== -1) {
+            const before = remaining.slice(0, openPos).trim();
+            if (before) html += renderMarkdownLite(before);
+            if (state.settings.showReasoningTags) {
+              const thinkBody = remaining.slice(openPos + 7);
+              html +=
+                '<details class="message__thinking is-streaming" open>' +
+                '<summary class="message__thinking__header">Reasoning\u2026' + chevron + "</summary>" +
+                '<div class="message__thinking__body">' + renderMarkdownLite(thinkBody) + "</div>" +
+                "</details>";
+            }
+          } else {
+            const trimmed = remaining.trim();
+            if (trimmed) html += renderMarkdownLite(trimmed);
+          }
+
+          return html;
+        }
+
         function renderMessages() {
           const nearBottom =
             refs.messagesWrap.scrollHeight - refs.messagesWrap.scrollTop - refs.messagesWrap.clientHeight < 120;
@@ -2831,11 +2950,10 @@
 
               const content = document.createElement("div");
               content.className = "message__content";
-              const displayContent = (message.role === "assistant" && !state.settings.showReasoningTags)
-                ? message.content.replace(/<think>[\s\S]*?<\/think>/gi, "").trim()
-                : message.content;
               content.innerHTML =
-                message.role === "assistant" ? renderMarkdownLite(displayContent) : "<p>" + escapeHtml(message.content) + "</p>";
+                message.role === "assistant"
+                  ? renderAssistantContent(message.content)
+                  : "<p>" + escapeHtml(message.content) + "</p>";
 
               bubble.appendChild(content);
 
