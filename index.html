@@ -3554,6 +3554,10 @@
             let endpoint, body, headers = { "Content-Type": "application/json" };
             if (s.apiKey) headers["Authorization"] = "Bearer " + s.apiKey.trim();
 
+            // 300 tokens gives thinking models (e.g. Qwen3) enough budget to
+            // finish their reasoning chain and still emit an actual title.
+            const MAX_TITLE_TOKENS = 300;
+
             if (s.provider === "ollama") {
               endpoint = base + "/api/chat";
               body = { model: s.model, messages: titleMessages, stream: false };
@@ -3562,10 +3566,10 @@
               headers["x-api-key"] = s.apiKey.trim();
               headers["anthropic-version"] = "2023-06-01";
               delete headers["Authorization"];
-              body = { model: s.model, max_tokens: 40, messages: titleMessages };
+              body = { model: s.model, max_tokens: MAX_TITLE_TOKENS, stream: false, messages: titleMessages };
             } else {
               endpoint = base + "/chat/completions";
-              body = { model: s.model, messages: titleMessages, stream: false, max_tokens: 40 };
+              body = { model: s.model, messages: titleMessages, stream: false, max_tokens: MAX_TITLE_TOKENS };
             }
 
             const ctrl = new AbortController();
@@ -3583,7 +3587,15 @@
             } else if (s.provider === "anthropic") {
               title = (data.content && data.content[0] && data.content[0].text) || "";
             } else {
-              title = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "";
+              const msg = data.choices && data.choices[0] && data.choices[0].message;
+              // content is empty for thinking models that exhausted their budget on
+              // reasoning_content — fall back to the last line of reasoning_content.
+              title = (msg && msg.content) || "";
+              if (!title && msg && msg.reasoning_content) {
+                // Extract the last non-empty line as a best-effort title.
+                const lines = msg.reasoning_content.trim().split("\n").map((l) => l.trim()).filter(Boolean);
+                title = lines[lines.length - 1] || "";
+              }
             }
             title = title.replace(/<think>[\s\S]*?<\/think>/gi, "").trim().replace(/^["']|["']$/g, "");
             if (title) renameConversation(convId, title);
