@@ -3541,13 +3541,17 @@
           const s = state.settings;
           const base = s.apiBaseUrl.replace(/\/+$/, "");
           const asstContent = firstAsst.content.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
-          // Present the conversation as plain text inside a single message so the
-          // model treats it as a meta-task rather than continuing the conversation.
-          const snippet = "User: " + firstUser.content.slice(0, 300) + "\nAssistant: " + asstContent.slice(0, 300);
+          // Use a system message to frame the task so the model doesn't treat
+          // the conversation snippet as a chat it should continue.
+          const snippet = firstUser.content.slice(0, 300) + "\n---\n" + asstContent.slice(0, 300);
           const titleMessages = [
             {
+              role: "system",
+              content: "You generate short conversation titles. When given a conversation excerpt, reply with only a 4-8 word title. No punctuation at the start or end. No quotes.",
+            },
+            {
               role: "user",
-              content: "Give the following conversation a short descriptive title (4-8 words). Reply with only the title, no quotes or punctuation at the start or end.\n\n" + snippet,
+              content: snippet,
             },
           ];
 
@@ -3567,7 +3571,9 @@
               headers["x-api-key"] = s.apiKey.trim();
               headers["anthropic-version"] = "2023-06-01";
               delete headers["Authorization"];
-              body = { model: s.model, max_tokens: MAX_TITLE_TOKENS, stream: false, messages: titleMessages };
+              const anthropicSystem = titleMessages.find((m) => m.role === "system");
+              const anthropicMsgs = titleMessages.filter((m) => m.role !== "system");
+              body = { model: s.model, max_tokens: MAX_TITLE_TOKENS, stream: false, messages: anthropicMsgs, ...(anthropicSystem ? { system: anthropicSystem.content } : {}) };
             } else {
               endpoint = base + "/chat/completions";
               body = { model: s.model, messages: titleMessages, stream: false, max_tokens: MAX_TITLE_TOKENS };
@@ -3598,7 +3604,11 @@
                 title = lines[lines.length - 1] || "";
               }
             }
-            title = title.replace(/<think>[\s\S]*?<\/think>/gi, "").trim().replace(/^["']|["']$/g, "");
+            title = title.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+            // Take only the first non-empty line — models like Mistral get the
+            // title right on line 1 but then hallucinate more Q&A pairs.
+            title = title.split("\n").map((l) => l.trim()).find(Boolean) || "";
+            title = title.replace(/^["']|["']$/g, "");
             if (title) renameConversation(convId, title);
           } catch (_) {}
         }
@@ -4128,6 +4138,7 @@
                 signal: state.controller.signal,
               });
             });
+            addDebugEntry("Chat Response Received", { status: response.status, ok: response.ok });
           }
 
           if (!response.ok) {
@@ -4354,21 +4365,22 @@
 
           state.messages.push(userMessage);
           setComposerValue("", refs.composer);
-          state.isLoading = true;
-          render();
 
-          const assistantMessage = {
-            id: createId(),
-            role: "assistant",
-            content: "",
-            variants: [""],
-            variantIndex: 0,
-            createdAt: Date.now(),
-          };
-
-          state.controller = new AbortController();
-
+          let assistantMessage;
           try {
+            state.isLoading = true;
+            render();
+
+            assistantMessage = {
+              id: createId(),
+              role: "assistant",
+              content: "",
+              variants: [""],
+              variantIndex: 0,
+              createdAt: Date.now(),
+            };
+
+            state.controller = new AbortController();
             const contextMessages = [...state.messages];
             const wasStreaming = await performApiCall(contextMessages, assistantMessage, () => {
               state.messages.push(assistantMessage);
@@ -4378,12 +4390,14 @@
               state.messages.push(assistantMessage);
             }
           } catch (error) {
-            if (error && error.name !== "AbortError") {
+            if (error && error.name === "AbortError") {
+              addDebugEntry("Chat Aborted", { reason: "AbortError — request was cancelled before or during fetch" });
+            } else if (error) {
               addDebugEntry("Chat Failure", formatErrorDetails(error));
               setError(error.message || "Something went wrong.");
             }
           } finally {
-            assistantMessage.variants[assistantMessage.variantIndex] = assistantMessage.content;
+            if (assistantMessage) assistantMessage.variants[assistantMessage.variantIndex] = assistantMessage.content;
             state.isLoading = false;
             state.controller = null;
             const activeConv = getActiveConversation();
