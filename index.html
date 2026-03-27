@@ -350,24 +350,21 @@
         flex-shrink: 0;
         display: flex;
         flex-direction: column;
-        border-right: 1px solid var(--border);
-        background: var(--background);
+        background: #f2f2f2;
         overflow: hidden;
         transition: width 180ms ease;
       }
 
       .conv-sidebar.is-collapsed {
-        width: 0;
+        width: 44px;
       }
 
       .conv-sidebar__header {
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        padding: 10px 6px 10px 14px;
-        border-bottom: 1px solid var(--border);
+        padding: 0;
         flex-shrink: 0;
-        gap: 4px;
+        height: 44px;
       }
 
       .conv-sidebar__brand {
@@ -375,12 +372,49 @@
         font-size: 14px;
         flex: 1;
         min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        padding-left: 12px;
+      }
+
+      .conv-sidebar.is-collapsed .conv-sidebar__brand {
+        display: none;
+      }
+
+      .conv-sidebar__new-chat {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px 6px 12px;
+        margin: 2px 8px 4px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        background: none;
+        border: none;
+        color: var(--foreground);
+        width: calc(100% - 16px);
+        text-align: left;
+        flex-shrink: 0;
+      }
+
+      .conv-sidebar__new-chat:hover {
+        background: var(--border);
+      }
+
+      .conv-sidebar.is-collapsed .conv-sidebar__new-chat {
+        display: none;
       }
 
       .conv-sidebar__list {
         flex: 1;
         overflow-y: auto;
         padding: 4px 0;
+      }
+
+      .conv-sidebar.is-collapsed .conv-sidebar__list {
+        display: none;
       }
 
       .conv-item {
@@ -394,24 +428,20 @@
       }
 
       .conv-item:hover {
-        background: var(--secondary);
+        background: var(--border);
       }
 
       .conv-item.is-active {
-        background: var(--secondary);
-      }
-
-      .conv-item__body {
-        flex: 1;
-        min-width: 0;
+        background: var(--border);
       }
 
       .conv-item__title {
+        flex: 1;
+        min-width: 0;
         font-size: 13px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        display: block;
         color: var(--foreground);
       }
 
@@ -420,21 +450,15 @@
       }
 
       .conv-item__title-input {
+        flex: 1;
+        min-width: 0;
         font-size: 13px;
-        width: 100%;
-        border: 0;
+        border: none;
+        outline: none;
         background: transparent;
-        outline: 1px solid var(--primary);
-        border-radius: 3px;
-        padding: 0 2px;
+        padding: 0;
         color: var(--foreground);
         font-family: inherit;
-      }
-
-      .conv-item__time {
-        font-size: 11px;
-        color: var(--muted);
-        white-space: nowrap;
       }
 
       .conv-item__delete {
@@ -480,7 +504,6 @@
           width: 260px;
           transform: translateX(-100%);
           transition: transform 200ms ease;
-          border-right: 1px solid var(--border);
         }
         .conv-sidebar:not(.is-collapsed) {
           transform: translateX(0);
@@ -1007,35 +1030,18 @@
 
       .streaming-indicator {
         display: flex;
-        justify-content: flex-start;
-      }
-
-      .streaming-indicator__dots {
-        display: flex;
         align-items: center;
-        gap: 6px;
         padding: 12px 0;
       }
 
-      .streaming-indicator__dots span {
-        width: 6px;
-        height: 6px;
+      .streaming-indicator__spinner {
+        width: 12px;
+        height: 12px;
+        border: 1.5px solid currentColor;
+        border-top-color: transparent;
         border-radius: 50%;
-        background: var(--muted);
-        animation: pulse 1.4s ease-in-out infinite;
-      }
-
-      .streaming-indicator__dots span:nth-child(2) {
-        animation-delay: 0.2s;
-      }
-
-      .streaming-indicator__dots span:nth-child(3) {
-        animation-delay: 0.4s;
-      }
-
-      @keyframes pulse {
-        0%, 100% { opacity: 0.35; }
-        50% { opacity: 1; }
+        animation: thinking-spin 0.7s linear infinite;
+        flex-shrink: 0;
       }
 
       .composer {
@@ -1718,13 +1724,20 @@
       <aside id="convSidebar" class="conv-sidebar" aria-label="Conversations">
         <div class="conv-sidebar__header">
           <span class="conv-sidebar__brand">Slate</span>
-          <button id="newConvButton" class="icon-button" type="button" aria-label="New conversation">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M12 20h9"></path>
-              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+          <button id="convSidebarToggle" class="icon-button" type="button" aria-label="Toggle sidebar" style="flex-shrink:0;width:44px;height:44px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+              <path d="M9 3v18"></path>
             </svg>
           </button>
         </div>
+        <button id="newConvButton" class="conv-sidebar__new-chat" type="button" aria-label="New conversation">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 20h9"></path>
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+          </svg>
+          New Chat
+        </button>
         <div id="convList" class="conv-sidebar__list"></div>
       </aside>
       <div class="conv-sidebar-overlay" id="convSidebarOverlay"></div>
@@ -1732,12 +1745,6 @@
       <header class="topbar">
         <div class="topbar__row">
           <div class="topbar__left">
-            <button id="convSidebarToggle" class="icon-button" type="button" aria-label="Toggle conversations">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <rect x="3" y="3" width="18" height="18" rx="2"></rect>
-                <path d="M9 3v18"></path>
-              </svg>
-            </button>
             <div class="model-label">
               <select id="topModelSelect" class="model-picker" aria-label="Select model">
                 <option value="">Select model</option>
@@ -3316,7 +3323,7 @@
             if (state.isLoading && state.messages[state.messages.length - 1].role === "user") {
               const loading = document.createElement("div");
               loading.className = "streaming-indicator";
-              loading.innerHTML = '<div class="streaming-indicator__dots"><span></span><span></span><span></span></div>';
+              loading.innerHTML = '<span class="streaming-indicator__spinner"></span>';
               inner.appendChild(loading);
             }
 
@@ -3474,27 +3481,17 @@
             item.className = "conv-item" + (conv.id === state.activeConversationId ? " is-active" : "");
             item.dataset.id = conv.id;
 
-            const body = document.createElement("div");
-            body.className = "conv-item__body";
-
             const titleEl = document.createElement("span");
             titleEl.className = "conv-item__title";
             titleEl.textContent = conv.title;
             titleEl.title = conv.title;
-
-            const timeEl = document.createElement("span");
-            timeEl.className = "conv-item__time";
-            timeEl.textContent = formatConvTime(conv.updatedAt);
-
-            body.appendChild(titleEl);
-            body.appendChild(timeEl);
 
             const del = document.createElement("button");
             del.className = "conv-item__delete";
             del.setAttribute("aria-label", "Delete conversation");
             del.innerHTML = "&#x2715;";
 
-            item.appendChild(body);
+            item.appendChild(titleEl);
             item.appendChild(del);
             list.appendChild(item);
 
