@@ -11,6 +11,7 @@ test-results/
 
 # Bundled local tools
 .tools/
+tools/
 
 # macOS metadata
 .DS_Store

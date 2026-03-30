@@ -1,6 +1,6 @@
 # Slate
 
-A minimal, self-contained chat UI for OpenAI-compatible APIs and Ollama backends. Ships as a single HTML file — no build step, no server, no dependencies.
+A minimal chat UI for OpenAI-compatible APIs, Ollama, and Anthropic. Ships as a single HTML file — open it in any browser, no server or install needed.
 
 <div align="center">
 
@@ -9,34 +9,49 @@ A minimal, self-contained chat UI for OpenAI-compatible APIs and Ollama backends
 
 </div>
 
+![Slate chat interface](docs/screenshot-chat.png)
+
 ## Download
 
-Download the latest release here:
-
-- [Slate-latest.html](https://github.com/HansJoakimPersson/Slate/releases/latest/download/Slate-latest.html)
+[**Slate-latest.html**](https://github.com/HansJoakimPersson/Slate/releases/latest/download/Slate-latest.html) — download and open in your browser.
 
 ## Features
 
-- Single HTML file — open directly in the browser or serve statically
-- Supports OpenAI-compatible APIs and Ollama backends
-- Streaming responses with Markdown rendering
-- API key stays in memory only — never persisted
-- No external dependencies, no CDN, no build step
-- Desktop-first layout
+- **Single file** — the entire app is one `index.html`. No install, no build step, no CDN.
+- **Runs directly in the browser** — just open the file. No server, no Python, no Node.
+- **Multiple conversations** — sidebar with history, auto-generated titles, and inline rename.
+- **Streaming responses** — real-time token streaming with Markdown rendering.
+- **Thinking models** — collapsible reasoning blocks with live spinner for models that expose chain-of-thought (Qwen3, DeepSeek-R1, etc.).
+- **Three providers** — OpenAI-compatible endpoints (Docker Model Runner, LM Studio, etc.), Ollama, and Anthropic Claude.
+- **Full settings panel** — system prompt, temperature, top-p, max tokens, tools/function calling, and provider-specific parameters.
+- **API key never persisted** — the key stays in memory only, cleared on page close.
+
+![Slate settings panel](docs/screenshot-settings.png)
 
 ## Usage
 
-Open `index.html` directly in a browser, or serve it with any static HTTP server:
+1. [Download `Slate-latest.html`](https://github.com/HansJoakimPersson/Slate/releases/latest/download/Slate-latest.html)
+2. Open it in your browser
+3. Click the settings icon, set your API base URL and model, and start chatting
+
+No server required. Works with any browser that supports `fetch` and `EventSource`.
+
+## Development
+
+The default API endpoint is `http://127.0.0.1:12434/engines/v1` (Docker Model Runner). To use a different backend, change the **API Base URL** in settings — for example `http://localhost:11434` for Ollama or `https://api.openai.com/v1` for OpenAI.
+
+To run the test suite:
 
 ```bash
-python3 -m http.server 4179
+npm install
+npm run test:e2e
 ```
 
-Then open `http://127.0.0.1:4179` and configure your API endpoint and key in the settings panel.
+Tests use Playwright and mock all network requests — no live backend needed.
 
 ## Support
 
-If you want to support this project or whatever I end up building next:
+If you want to support this project:
 
 - [Buy Me a Coffee](https://buymeacoffee.com/hansjoakimpersson)
 
