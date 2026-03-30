@@ -3000,7 +3000,7 @@
         }
 
         async function fetchProviderModels(settings, options) {
-          const base = settings.apiBaseUrl.replace(/\/+$/, "");
+          const base = settings.apiBaseUrl.trim().replace(/\/+$/, "");
           if (!base) throw new Error("API base URL is required.");
           const endpoint = settings.provider === "ollama"
             ? base + "/api/tags"
@@ -3752,7 +3752,7 @@
             options.use_mlock = s.useMlock;
             requestBody.options = options;
             if (s.format) requestBody.format = s.format;
-            if (s.keepAlive !== "") requestBody.keep_alive = s.keepAlive;
+            if (s.keepAlive.trim() !== "") requestBody.keep_alive = s.keepAlive.trim();
             if (s.think) requestBody.think = true;
             if (s.customParams.trim()) { try { Object.assign(requestBody, JSON.parse(s.customParams)); } catch (_) {} }
             return requestBody;
@@ -4102,7 +4102,7 @@
         // Returns true if streaming was used, false otherwise.
         async function performApiCall(contextMessages, targetMsg, onBeforeStream) {
           const startTime = Date.now();
-          const base = state.settings.apiBaseUrl.replace(/\/+$/, "");
+          const base = state.settings.apiBaseUrl.trim().replace(/\/+$/, "");
           const endpoint = state.settings.provider === "ollama"
             ? base + "/api/chat"
             : state.settings.provider === "anthropic"
@@ -4344,7 +4344,7 @@
           const content = refs.composer.value.trim();
           if (!content || state.isLoading) return;
 
-          const base = state.settings.apiBaseUrl.replace(/\/+$/, "");
+          const base = state.settings.apiBaseUrl.trim().replace(/\/+$/, "");
           if (!base) {
             setError("API base URL is required. Open settings to configure.");
             return;
@@ -4529,14 +4529,14 @@
         bindToggle(refs.useMlockToggle, "useMlock", true);
 
         refs.apiBaseUrlInput.addEventListener("input", (event) => {
-          state.settings.apiBaseUrl = event.target.value;
+          state.settings.apiBaseUrl = event.target.value.trim();
           syncActiveProfile(state.providerProfiles, state.settings);
           state.availableModels = [];
           populateSettingsModelSelect("");
           clearStatuses();
         });
         refs.apiKeyInput.addEventListener("input", (event) => {
-          state.settings.apiKey = event.target.value;
+          state.settings.apiKey = event.target.value.trim();
           syncActiveProfile(state.providerProfiles, state.settings);
           state.availableModels = [];
           populateSettingsModelSelect("");
@@ -4635,7 +4635,7 @@
           syncActiveProfile(state.providerProfiles, state.settings);
         });
         refs.keepAliveInput.addEventListener("input", (event) => {
-          state.settings.keepAlive = event.target.value;
+          state.settings.keepAlive = event.target.value.trim();
           syncActiveProfile(state.providerProfiles, state.settings);
         });
         refs.streamChunkSizeInput.addEventListener("input", (event) => {
