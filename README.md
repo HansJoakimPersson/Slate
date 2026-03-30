@@ -9,7 +9,7 @@ A minimal chat UI for OpenAI-compatible APIs, Ollama, and Anthropic. Ships as a 
 
 </div>
 
-![Slate chat interface](docs/screenshot-chat.png)
+![Slate chat interface](.github/docs/screenshot-chat.png)
 
 ## Download
 
@@ -26,7 +26,6 @@ A minimal chat UI for OpenAI-compatible APIs, Ollama, and Anthropic. Ships as a 
 - **Full settings panel** — system prompt, temperature, top-p, max tokens, tools/function calling, and provider-specific parameters.
 - **API key never persisted** — the key stays in memory only, cleared on page close.
 
-![Slate settings panel](docs/screenshot-settings.png)
 
 ## Usage
 
@@ -36,18 +35,7 @@ A minimal chat UI for OpenAI-compatible APIs, Ollama, and Anthropic. Ships as a 
 
 No server required. Works with any browser that supports `fetch` and `EventSource`.
 
-## Development
-
 The default API endpoint is `http://127.0.0.1:12434/engines/v1` (Docker Model Runner). To use a different backend, change the **API Base URL** in settings — for example `http://localhost:11434` for Ollama or `https://api.openai.com/v1` for OpenAI.
-
-To run the test suite:
-
-```bash
-npm install
-npm run test:e2e
-```
-
-Tests use Playwright and mock all network requests — no live backend needed.
 
 ## Support
 
