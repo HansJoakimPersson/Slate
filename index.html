@@ -4341,8 +4341,8 @@
         }
 
         async function sendMessage() {
-          const content = refs.composer.value.trim();
-          if (!content || state.isLoading) return;
+          const content = refs.composer.value;
+          if (!content.trim() || state.isLoading) return;
 
           const base = state.settings.apiBaseUrl.trim().replace(/\/+$/, "");
           if (!base) {
