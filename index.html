@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Slate Chat</title>
     <style>
+      /* ── Design tokens ─────────────────────────────────────────────── */
       :root {
         --background: #ffffff;
         --foreground: #212121;
@@ -19,6 +20,7 @@
         --overlay: rgba(33, 33, 33, 0.2);
       }
 
+      /* ── Reset & base ───────────────────────────────────────────────── */
       * {
         box-sizing: border-box;
       }
@@ -330,6 +332,7 @@
         }
       }
 
+      /* ── App shell ──────────────────────────────────────────────────── */
       .app {
         height: 100vh;
         display: flex;
@@ -518,6 +521,7 @@
         }
       }
 
+      /* ── Topbar ─────────────────────────────────────────────────────── */
       .topbar {
         display: flex;
         flex-direction: column;
@@ -610,6 +614,7 @@
         color: var(--muted);
       }
 
+      /* ── Icon buttons ───────────────────────────────────────────────── */
       .icon-button,
       .modal__close,
       .modal__secondary,
@@ -660,6 +665,7 @@
         padding: 24px 0;
       }
 
+      /* ── Empty / hero state ─────────────────────────────────────────── */
       .empty-state {
         flex: 1;
         display: flex;
@@ -743,6 +749,7 @@
         color: rgba(115, 115, 115, 0.6);
       }
 
+      /* ── Messages ───────────────────────────────────────────────────── */
       .message {
         display: flex;
         margin-bottom: 24px;
@@ -1028,6 +1035,7 @@
         white-space: nowrap;
       }
 
+      /* ── Streaming indicator ────────────────────────────────────────── */
       .streaming-indicator {
         display: flex;
         align-items: center;
@@ -1044,6 +1052,7 @@
         flex-shrink: 0;
       }
 
+      /* ── Composer ───────────────────────────────────────────────────── */
       .composer {
         padding: 8px 16px 16px;
         background: var(--background);
@@ -1163,6 +1172,7 @@
         padding: 2px;
       }
 
+      /* ── Modal ──────────────────────────────────────────────────────── */
       .modal {
         position: fixed;
         inset: 0;
@@ -1232,6 +1242,7 @@
         overflow: auto;
       }
 
+      /* ── Settings panel ─────────────────────────────────────────────── */
       .settings-field {
         display: block;
       }
@@ -1457,6 +1468,7 @@
         word-break: break-word;
       }
 
+      /* ── Debug / right sidebar ──────────────────────────────────────── */
       #sidebar {
         display: none;
         flex-direction: column;
@@ -1649,6 +1661,7 @@
         padding: 8px 14px;
       }
 
+      /* ── Buttons & animations ───────────────────────────────────────── */
       .primary-button {
         border: 0;
         border-radius: 10px;
@@ -1687,6 +1700,7 @@
         transform: scale(0.97);
       }
 
+      /* ── Responsive overrides (≤720px) ─────────────────────────────── */
       @media (max-width: 720px) {
         .topbar {
           padding-left: 12px;
@@ -3385,6 +3399,9 @@
             try {
               localStorage.setItem("slate_conversations", JSON.stringify(state.conversations));
               localStorage.setItem("slate_active_conv", state.activeConversationId || "");
+              // Persist all settings except apiKey (never stored)
+              const { apiKey: _omit, ...settingsToSave } = state.settings;
+              localStorage.setItem("slate_settings", JSON.stringify(settingsToSave));
             } catch (_) {}
           }, 300);
         }
@@ -3409,6 +3426,18 @@
             state.activeConversationId = initial.id;
           }
           state.messages = getActiveConversation().messages;
+
+          // Restore settings (apiKey always starts blank)
+          try {
+            const savedSettings = localStorage.getItem("slate_settings");
+            if (savedSettings) {
+              const parsed = JSON.parse(savedSettings);
+              Object.assign(state.settings, parsed);
+              state.settings.apiKey = "";
+              // Sync the active provider profile from restored settings
+              syncActiveProfile(state.providerProfiles, state.settings);
+            }
+          } catch (_) {}
         }
 
         function switchConversation(id) {
@@ -4691,6 +4720,10 @@
           state.debugEntries = [];
           renderDebugPanel();
         });
+        // Persist settings whenever any input in the settings panel changes
+        refs.settingsPanel.addEventListener("input", saveToStorage);
+        refs.settingsPanel.addEventListener("change", saveToStorage);
+
         refs.closeFatalErrorButton.addEventListener("click", closeFatalError);
         refs.dismissFatalErrorButton.addEventListener("click", closeFatalError);
         refs.fatalErrorModal.addEventListener("click", (event) => {
